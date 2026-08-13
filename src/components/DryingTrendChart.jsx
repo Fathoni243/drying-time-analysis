@@ -61,11 +61,16 @@ function formatYTick(minutes) {
 
 export default function DryingTrendChart({ filteredData, filters }) {
   const chartData = useMemo(() => {
-    return filteredData.slice(0, 200).map((d, i) => ({
-      ...d,
-      index: i + 1,
-      shortBatch: d.batchNo.slice(-6),
-    }));
+    return filteredData.slice(0, 200).map((d, i) => {
+      const shortBatch = d.batchNo.slice(-6);
+      const yearSuffix = d.year ? String(d.year).slice(-2) : null;
+      const label = yearSuffix ? `${shortBatch} / ${yearSuffix}` : shortBatch;
+      return {
+        ...d,
+        index: i + 1,
+        shortBatch: label,
+      };
+    });
   }, [filteredData]);
 
   const avgMinutes = useMemo(() => {

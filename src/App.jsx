@@ -6,6 +6,7 @@ import FilterBar from './components/FilterBar';
 import StatsCards from './components/StatsCards';
 import DryingTrendChart from './components/DryingTrendChart';
 import ProductCompareChart from './components/ProductCompareChart';
+import DryingTickerWidget from './components/DryingTickerWidget';
 import DataTable from './components/DataTable';
 import LoadingSpinner from './components/LoadingSpinner';
 
@@ -78,23 +79,16 @@ export default function App() {
             {/* Stats Cards */}
             <StatsCards filteredData={filteredData} />
 
-            {/* Charts grid */}
-            <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 mb-6">
-              {/* Trend Chart takes full width if no specific product */}
-              <div className={filters.product ? '' : 'xl:col-span-2'}>
-                <DryingTrendChart filteredData={filteredData} filters={filters} />
-              </div>
-
-              {/* Product comparison — show on right when product is selected, or below */}
-              {filters.product ? (
-                <ProductCompareChart data={data} filters={filters} />
-              ) : null}
+            {/* Trend Chart — always full width */}
+            <div className="mb-6">
+              <DryingTrendChart filteredData={filteredData} filters={filters} />
             </div>
 
-            {/* Product comparison full width when no product filter */}
-            {!filters.product && (
+            {/* Bottom row: Bar Chart + Ticker side by side */}
+            <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 mb-6">
               <ProductCompareChart data={data} filters={filters} />
-            )}
+              <DryingTickerWidget data={data} filters={filters} />
+            </div>
 
             {/* Data Table */}
             <DataTable filteredData={filteredData} />
