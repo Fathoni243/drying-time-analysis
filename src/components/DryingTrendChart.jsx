@@ -47,7 +47,7 @@ function CustomTooltip({ active, payload, label }) {
         </div>
         <div className="border-t border-amber-500/15 pt-1 mt-1 flex justify-between gap-6">
           <span className="text-slate-400">Drying Time</span>
-          <span className="font-bold text-amber-300 text-sm">{d?.subTotalDrying}</span>
+          <span className="font-bold text-amber-300 text-sm">{d?.subTotalDryingFinal}</span>
         </div>
       </div>
     </div>
@@ -80,9 +80,9 @@ export default function DryingTrendChart({ filteredData, filters }) {
 
   const title = useMemo(() => {
     const parts = [];
-    if (filters.product) parts.push(filters.product);
-    if (filters.kg) parts.push(`(${filters.kg} Kg)`);
-    if (filters.year) parts.push(`Tahun ${filters.year}`);
+    if (filters.codeProduct) parts.push(`Code: ${filters.codeProduct}`);
+    if (filters.kg)          parts.push(`(${filters.kg} Kg)`);
+    if (filters.year)        parts.push(`Tahun ${filters.year}`);
     return parts.length > 0
       ? `Trend Drying: ${parts.join(' ')}`
       : 'Trend Sub Total Drying (Semua Produk)';

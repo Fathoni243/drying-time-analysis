@@ -1,58 +1,97 @@
 import { useMemo, useState, useRef, useEffect } from 'react';
-import { SlidersHorizontal, X, Calendar, Package, Weight, Search } from 'lucide-react';
+import { SlidersHorizontal, X, Calendar, Tag, Weight, Search } from 'lucide-react';
 
 export default function FilterBar({ data, filters, onFilterChange, onReset }) {
-  const [productSearch, setProductSearch] = useState(filters.product || '');
+  const [codeSearch, setCodeSearch]         = useState(filters.codeProduct || '');
   const [showSuggestions, setShowSuggestions] = useState(false);
-  const searchRef = useRef(null);
+  const inputRef    = useRef(null);
   const dropdownRef = useRef(null);
 
-  // Sync search text when filter is reset externally
+  // Sync search text when filters are reset externally
   useEffect(() => {
-    if (!filters.product) setProductSearch('');
-  }, [filters.product]);
+    if (!filters.codeProduct) setCodeSearch('');
+  }, [filters.codeProduct]);
 
-  // Close dropdown when clicking outside
+  // Close dropdown on outside click
   useEffect(() => {
-    const handleClickOutside = (e) => {
+    const handler = (e) => {
       if (
-        searchRef.current && !searchRef.current.contains(e.target) &&
-        dropdownRef.current && !dropdownRef.current.contains(e.target)
+        !inputRef.current?.contains(e.target) &&
+        !dropdownRef.current?.contains(e.target)
       ) {
         setShowSuggestions(false);
       }
     };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
   }, []);
 
-  // Derive years from full data
+  // ── Filter option derivation ─────────────────────────────────────────────
+
   const years = useMemo(() => {
     const set = new Set(data.map(d => d.year).filter(Boolean));
     return Array.from(set).sort((a, b) => a - b);
   }, [data]);
 
-  // Filter product list based on search text + selected year
-  const filteredProducts = useMemo(() => {
-    let source = data;
-    if (filters.year) source = source.filter(d => d.year === parseInt(filters.year));
-    const set = new Set(source.map(d => d.productName).filter(Boolean));
-    const allProducts = Array.from(set).sort();
-    if (!productSearch.trim()) return allProducts;
-    const q = productSearch.toLowerCase();
-    return allProducts.filter(p => p.toLowerCase().includes(q));
-  }, [data, filters.year, productSearch]);
+  /** Unique Code Products, filtered by selected year */
+  const codeProductOptions = useMemo(() => {
+    const source = filters.year
+      ? data.filter(d => d.year === parseInt(filters.year))
+      : data;
 
-  // Kg options based on year + selected product
+    // Build a map: codeProduct → productName (for display hint)
+    const map = new Map();
+    source.forEach(d => {
+      if (d.codeProduct && !map.has(d.codeProduct)) {
+        map.set(d.codeProduct, d.productName);
+      }
+    });
+
+    const entries = Array.from(map.entries())
+      .sort(([a], [b]) => a.localeCompare(b));
+
+    if (!codeSearch.trim()) return entries;
+    const q = codeSearch.toLowerCase();
+    return entries.filter(
+      ([code, name]) =>
+        code.toLowerCase().includes(q) ||
+        name.toLowerCase().includes(q)
+    );
+  }, [data, filters.year, codeSearch]);
+
+  /** Planning (Kg) options, filtered by year + selected code product */
   const kgOptions = useMemo(() => {
-    let filtered = data;
-    if (filters.year) filtered = filtered.filter(d => d.year === parseInt(filters.year));
-    if (filters.product) filtered = filtered.filter(d => d.productName === filters.product);
-    const set = new Set(filtered.map(d => d.planningKg).filter(v => v > 0));
+    let source = data;
+    if (filters.year)        source = source.filter(d => d.year === parseInt(filters.year));
+    if (filters.codeProduct) source = source.filter(d => d.codeProduct === filters.codeProduct);
+    const set = new Set(source.map(d => d.planningKg).filter(v => v > 0));
     return Array.from(set).sort((a, b) => a - b);
-  }, [data, filters.year, filters.product]);
+  }, [data, filters.year, filters.codeProduct]);
 
-  const hasActiveFilter = filters.year || filters.product || filters.kg;
+  const hasActiveFilter = filters.year || filters.codeProduct || filters.kg;
+
+  // ── Event handlers ───────────────────────────────────────────────────────
+
+  const handleSelectCode = (code) => {
+    setCodeSearch(code);
+    setShowSuggestions(false);
+    onFilterChange('codeProduct', code);
+  };
+
+  const handleSearchChange = (e) => {
+    const val = e.target.value;
+    setCodeSearch(val);
+    setShowSuggestions(true);
+    if (!val.trim()) onFilterChange('codeProduct', '');
+  };
+
+  const handleClearCode = () => {
+    setCodeSearch('');
+    setShowSuggestions(false);
+    onFilterChange('codeProduct', '');
+  };
+
+  // ── Shared styles ────────────────────────────────────────────────────────
 
   const selectClass = `
     w-full bg-[#0d1528] border border-amber-500/15 text-slate-200 text-sm rounded-xl
@@ -60,30 +99,9 @@ export default function FilterBar({ data, filters, onFilterChange, onReset }) {
     hover:border-amber-500/30 transition-all duration-200 cursor-pointer
   `;
 
-  const handleSelectProduct = (product) => {
-    setProductSearch(product);
-    setShowSuggestions(false);
-    onFilterChange('product', product);
-  };
-
-  const handleSearchChange = (e) => {
-    const val = e.target.value;
-    setProductSearch(val);
-    setShowSuggestions(true);
-    // If cleared, reset product filter
-    if (!val.trim()) {
-      onFilterChange('product', '');
-    }
-  };
-
-  const handleClearProduct = () => {
-    setProductSearch('');
-    setShowSuggestions(false);
-    onFilterChange('product', '');
-  };
-
   return (
     <div className="glass-card p-5 mb-6 fade-in-up">
+      {/* Title row */}
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
           <SlidersHorizontal className="w-4 h-4 text-amber-400" />
@@ -107,7 +125,8 @@ export default function FilterBar({ data, filters, onFilterChange, onReset }) {
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        {/* Year */}
+
+        {/* ── Year ── */}
         <div className="space-y-1.5">
           <label className="flex items-center gap-1.5 text-xs text-slate-400 font-medium">
             <Calendar className="w-3.5 h-3.5 text-amber-500/70" />
@@ -120,98 +139,91 @@ export default function FilterBar({ data, filters, onFilterChange, onReset }) {
             onChange={e => onFilterChange('year', e.target.value)}
           >
             <option value="">Semua Tahun</option>
-            {years.map(y => (
-              <option key={y} value={y}>{y}</option>
-            ))}
+            {years.map(y => <option key={y} value={y}>{y}</option>)}
           </select>
         </div>
 
-        {/* Product Search */}
+        {/* ── Code Product (searchable) ── */}
         <div className="space-y-1.5">
           <label className="flex items-center gap-1.5 text-xs text-slate-400 font-medium">
-            <Package className="w-3.5 h-3.5 text-amber-500/70" />
-            Produk
-            {filters.product && (
+            <Tag className="w-3.5 h-3.5 text-amber-500/70" />
+            Code Product
+            {filters.codeProduct && (
               <span className="text-amber-400 font-semibold">— terpilih</span>
             )}
           </label>
           <div className="relative">
-            {/* Search Input */}
+            {/* Input */}
             <div className="relative flex items-center">
               <Search className="absolute left-3 w-3.5 h-3.5 text-slate-500 pointer-events-none z-10" />
               <input
-                id="filter-product-search"
-                ref={searchRef}
+                id="filter-code-search"
+                ref={inputRef}
                 type="text"
-                placeholder="Cari nama produk..."
-                value={productSearch}
+                placeholder="Cari code / nama produk..."
+                value={codeSearch}
                 onChange={handleSearchChange}
                 onFocus={() => setShowSuggestions(true)}
+                autoComplete="off"
                 className={`
                   w-full bg-[#0d1528] border text-slate-200 text-sm rounded-xl
                   pl-9 pr-8 py-2.5
                   focus:outline-none focus:ring-1 focus:ring-amber-500/30
                   hover:border-amber-500/30 transition-all duration-200
-                  ${filters.product
+                  ${filters.codeProduct
                     ? 'border-amber-500/40 bg-amber-500/5'
-                    : 'border-amber-500/15 focus:border-amber-500/50'
-                  }
+                    : 'border-amber-500/15 focus:border-amber-500/50'}
                 `}
-                autoComplete="off"
               />
-              {productSearch && (
+              {codeSearch && (
                 <button
-                  onClick={handleClearProduct}
+                  onClick={handleClearCode}
                   className="absolute right-3 text-slate-500 hover:text-amber-400 transition-colors"
-                  title="Hapus pilihan"
                 >
                   <X className="w-3.5 h-3.5" />
                 </button>
               )}
             </div>
 
-            {/* Suggestion Dropdown */}
-            {showSuggestions && filteredProducts.length > 0 && (
+            {/* Suggestion dropdown */}
+            {showSuggestions && codeProductOptions.length > 0 && (
               <div
                 ref={dropdownRef}
                 className="absolute z-50 mt-1 w-full max-h-56 overflow-y-auto rounded-xl border border-amber-500/20 bg-[#0d1528] shadow-2xl shadow-black/60"
               >
-                {filteredProducts.length === 0 ? (
-                  <div className="px-3 py-3 text-xs text-slate-500 text-center">
-                    Tidak ada produk ditemukan
-                  </div>
-                ) : (
-                  filteredProducts.map((product) => (
-                    <button
-                      key={product}
-                      onMouseDown={() => handleSelectProduct(product)}
-                      className={`
-                        w-full text-left px-3 py-2.5 text-sm transition-colors duration-150
-                        border-b border-white/[0.04] last:border-0
-                        ${filters.product === product
-                          ? 'bg-amber-500/15 text-amber-300 font-medium'
-                          : 'text-slate-300 hover:bg-amber-500/8 hover:text-amber-300'
-                        }
-                      `}
-                    >
-                      {/* Highlight matched text */}
-                      <HighlightMatch text={product} query={productSearch} />
-                    </button>
-                  ))
-                )}
+                {codeProductOptions.map(([code, name]) => (
+                  <button
+                    key={code}
+                    onMouseDown={() => handleSelectCode(code)}
+                    className={`
+                      w-full text-left px-3 py-2.5 transition-colors duration-150
+                      border-b border-white/[0.04] last:border-0
+                      ${filters.codeProduct === code
+                        ? 'bg-amber-500/15 text-amber-300'
+                        : 'hover:bg-amber-500/8 hover:text-amber-300'}
+                    `}
+                  >
+                    <span className="block text-sm font-semibold text-slate-200">
+                      <HighlightMatch text={code} query={codeSearch} />
+                    </span>
+                    <span className="block text-xs text-slate-500 mt-0.5 truncate">
+                      <HighlightMatch text={name} query={codeSearch} />
+                    </span>
+                  </button>
+                ))}
               </div>
             )}
 
-            {/* No results */}
-            {showSuggestions && productSearch && filteredProducts.length === 0 && (
-              <div className="absolute z-100 mt-1 w-full rounded-xl border border-amber-500/20 bg-[#0d1528] shadow-2xl shadow-black/60 px-3 py-3">
-                <p className="text-xs text-slate-500 text-center">Tidak ada produk ditemukan</p>
+            {/* No results state */}
+            {showSuggestions && codeSearch && codeProductOptions.length === 0 && (
+              <div className="absolute z-50 mt-1 w-full rounded-xl border border-amber-500/20 bg-[#0d1528] shadow-2xl px-3 py-3">
+                <p className="text-xs text-slate-500 text-center">Tidak ada code product ditemukan</p>
               </div>
             )}
           </div>
         </div>
 
-        {/* Planning Kg */}
+        {/* ── Planning (Kg) ── */}
         <div className="space-y-1.5">
           <label className="flex items-center gap-1.5 text-xs text-slate-400 font-medium">
             <Weight className="w-3.5 h-3.5 text-amber-500/70" />
@@ -224,19 +236,18 @@ export default function FilterBar({ data, filters, onFilterChange, onReset }) {
             onChange={e => onFilterChange('kg', e.target.value)}
           >
             <option value="">Semua Kg</option>
-            {kgOptions.map(k => (
-              <option key={k} value={k}>{k} kg</option>
-            ))}
+            {kgOptions.map(k => <option key={k} value={k}>{k} kg</option>)}
           </select>
         </div>
+
       </div>
     </div>
   );
 }
 
-// Utility component to highlight matched substring
+// ── Helper: highlight matched substring ─────────────────────────────────────
 function HighlightMatch({ text, query }) {
-  if (!query.trim()) return <span>{text}</span>;
+  if (!query?.trim()) return <span>{text}</span>;
   const idx = text.toLowerCase().indexOf(query.toLowerCase());
   if (idx === -1) return <span>{text}</span>;
   return (

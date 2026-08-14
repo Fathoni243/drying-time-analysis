@@ -1,70 +1,111 @@
 import { useState, useMemo } from 'react';
+import * as XLSX from 'xlsx';
 import {
   ChevronUp, ChevronDown, ChevronsUpDown,
   ChevronLeft, ChevronRight, TableProperties, FileDown
 } from 'lucide-react';
-import { exportToExcel } from '../utils/exportExcel';
 
 const PAGE_SIZE = 15;
+
+// ── Helpers ──────────────────────────────────────────────────────────────────
 
 function SortIcon({ column, sortKey, sortDir }) {
   if (sortKey !== column) return <ChevronsUpDown className="w-3 h-3 text-slate-600" />;
   return sortDir === 'asc'
-    ? <ChevronUp className="w-3 h-3 text-amber-400" />
+    ? <ChevronUp   className="w-3 h-3 text-amber-400" />
     : <ChevronDown className="w-3 h-3 text-amber-400" />;
 }
 
+function exportToExcel(rows) {
+  const sheet = XLSX.utils.json_to_sheet(
+    rows.map((r, i) => ({
+      'No':                    i + 1,
+      'Tanggal':               r.date,
+      'Batch No':              r.batchNo,
+      'Code Product':          r.codeProduct,
+      'Product Name':          r.productName,
+      'Planning (Kg)':         r.planningKg,
+      'Sub Total Drying Final': r.subTotalDryingFinal,
+      'Tahun':                 r.year ?? '',
+    }))
+  );
+
+  sheet['!cols'] = [
+    { wch: 5  }, // No
+    { wch: 13 }, // Tanggal
+    { wch: 16 }, // Batch No
+    { wch: 14 }, // Code Product
+    { wch: 36 }, // Product Name
+    { wch: 14 }, // Planning (Kg)
+    { wch: 20 }, // Sub Total Drying Final
+    { wch: 8  }, // Tahun
+  ];
+
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, sheet, 'Data Detail');
+
+  const ts = new Date().toISOString().slice(0, 10);
+  XLSX.writeFile(wb, `drying-time-data-${ts}.xlsx`);
+}
+
+// ── Column definitions ────────────────────────────────────────────────────────
+
+const COLUMNS = [
+  { key: 'date',                label: 'Tanggal',      numeric: false },
+  { key: 'batchNo',             label: 'Batch No',     numeric: false },
+  { key: 'codeProduct',         label: 'Code Product', numeric: false },
+  { key: 'productName',         label: 'Produk',       numeric: false },
+  { key: 'planningKg',          label: 'Planning (Kg)',numeric: true  },
+  { key: 'dryingMinutes',       label: 'Drying Time',  numeric: true  },
+  { key: 'year',                label: 'Tahun',        numeric: false },
+];
+
+// ── Component ────────────────────────────────────────────────────────────────
 
 export default function DataTable({ filteredData }) {
   const [sortKey, setSortKey] = useState('date');
   const [sortDir, setSortDir] = useState('asc');
-  const [page, setPage] = useState(1);
+  const [page, setPage]       = useState(1);
   const [exporting, setExporting] = useState(false);
 
   const handleSort = (key) => {
-    if (sortKey === key) {
-      setSortDir(d => d === 'asc' ? 'desc' : 'asc');
-    } else {
-      setSortKey(key);
-      setSortDir('asc');
-    }
+    setSortDir(prev => (sortKey === key ? (prev === 'asc' ? 'desc' : 'asc') : 'asc'));
+    setSortKey(key);
     setPage(1);
   };
 
   const sorted = useMemo(() => {
+    const col = COLUMNS.find(c => c.key === sortKey);
     return [...filteredData].sort((a, b) => {
-      let va = a[sortKey], vb = b[sortKey];
-      if (sortKey === 'dryingMinutes' || sortKey === 'planningKg') {
-        va = Number(va); vb = Number(vb);
-        return sortDir === 'asc' ? va - vb : vb - va;
-      }
-      va = String(va || '').toLowerCase();
-      vb = String(vb || '').toLowerCase();
+      const va = col?.numeric ? Number(a[sortKey]) : String(a[sortKey] ?? '').toLowerCase();
+      const vb = col?.numeric ? Number(b[sortKey]) : String(b[sortKey] ?? '').toLowerCase();
+      if (col?.numeric) return sortDir === 'asc' ? va - vb : vb - va;
       return sortDir === 'asc' ? va.localeCompare(vb) : vb.localeCompare(va);
     });
   }, [filteredData, sortKey, sortDir]);
 
   const totalPages = Math.ceil(sorted.length / PAGE_SIZE);
-  const paged = sorted.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  const paged      = sorted.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   const handleExport = async () => {
-    if (exporting || sorted.length === 0) return;
+    if (exporting || !sorted.length) return;
     setExporting(true);
-    try {
-      // Small delay for UX feedback
-      await new Promise(r => setTimeout(r, 300));
-      exportToExcel(sorted);
-    } finally {
-      setExporting(false);
-    }
+    await new Promise(r => setTimeout(r, 300));
+    exportToExcel(sorted);
+    setExporting(false);
   };
 
-  const thClass = "px-4 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider cursor-pointer select-none hover:text-amber-400 transition-colors duration-200";
-  const tdClass = "px-4 py-3 text-sm text-slate-300 whitespace-nowrap";
+  // ── Shared class strings ─────────────────────────────────────────────────
+  const thBase = `
+    px-4 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider
+    cursor-pointer select-none hover:text-amber-400 transition-colors duration-200
+  `;
+  const td = "px-4 py-3 text-sm text-slate-300 whitespace-nowrap";
 
   return (
     <div className="glass-card mb-6 overflow-hidden fade-in-up">
-      {/* Header */}
+
+      {/* ── Header bar ── */}
       <div className="flex items-center justify-between px-6 py-4 border-b border-white/[0.05] flex-wrap gap-3">
         <div className="flex items-center gap-2">
           <TableProperties className="w-4 h-4 text-amber-400" />
@@ -75,28 +116,27 @@ export default function DataTable({ filteredData }) {
         </div>
 
         <div className="flex items-center gap-3 flex-wrap">
-          {/* Export Button */}
+          {/* Export button */}
           <button
             id="btn-export-excel"
             onClick={handleExport}
-            disabled={exporting || sorted.length === 0}
-            title={sorted.length === 0 ? 'Tidak ada data untuk diekspor' : `Export ${sorted.length} baris ke Excel`}
+            disabled={exporting || !sorted.length}
+            title={!sorted.length ? 'Tidak ada data' : `Export ${sorted.length} baris ke Excel`}
             className={`
               flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium border
               transition-all duration-200
-              ${sorted.length === 0
+              ${!sorted.length
                 ? 'bg-slate-700/30 border-slate-600/30 text-slate-600 cursor-not-allowed'
                 : exporting
                   ? 'bg-emerald-500/15 border-emerald-500/30 text-emerald-400 cursor-wait'
-                  : 'bg-emerald-500/10 border-emerald-500/25 text-emerald-400 hover:bg-emerald-500/20 hover:border-emerald-500/50 cursor-pointer'
-              }
+                  : 'bg-emerald-500/10 border-emerald-500/25 text-emerald-400 hover:bg-emerald-500/20 hover:border-emerald-500/50'}
             `}
           >
             <FileDown className={`w-3.5 h-3.5 ${exporting ? 'animate-bounce' : ''}`} />
-            {exporting ? 'Mengekspor...' : `Export Excel (${sorted.length})`}
+            {exporting ? 'Mengekspor…' : `Export Excel (${sorted.length})`}
           </button>
 
-          {/* Pagination controls */}
+          {/* Pagination */}
           <div className="flex items-center gap-2 text-xs text-slate-400">
             <span>Hlm {page} / {totalPages || 1}</span>
             <button
@@ -110,7 +150,7 @@ export default function DataTable({ filteredData }) {
             <button
               id="btn-table-next"
               onClick={() => setPage(p => Math.min(totalPages, p + 1))}
-              disabled={page === totalPages || totalPages === 0}
+              disabled={page >= totalPages}
               className="p-1 rounded-lg hover:bg-amber-500/10 hover:text-amber-400 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
             >
               <ChevronRight className="w-4 h-4" />
@@ -119,16 +159,18 @@ export default function DataTable({ filteredData }) {
         </div>
       </div>
 
-      {/* Export note */}
+      {/* Export context note */}
       {sorted.length > 0 && (
         <div className="px-6 py-2 bg-emerald-500/5 border-b border-emerald-500/10">
           <p className="text-xs text-slate-500">
-            💡 Export akan mengunduh <span className="text-emerald-400 font-medium">{sorted.length} baris</span> sesuai filter aktif saat ini (urutan: {sortKey === 'date' ? 'Tanggal' : sortKey === 'dryingMinutes' ? 'Drying Time' : sortKey === 'productName' ? 'Produk' : sortKey} · {sortDir === 'asc' ? 'A→Z / Kecil→Besar' : 'Z→A / Besar→Kecil'})
+            💡 Export mengunduh{' '}
+            <span className="text-emerald-400 font-medium">{sorted.length} baris</span>{' '}
+            sesuai filter aktif
           </p>
         </div>
       )}
 
-      {/* Table */}
+      {/* ── Table ── */}
       <div className="overflow-x-auto">
         <table className="w-full">
           <thead>
@@ -136,71 +178,56 @@ export default function DataTable({ filteredData }) {
               <th className="px-4 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider w-10">
                 No
               </th>
-              <th className={thClass} onClick={() => handleSort('date')}>
-                <div className="flex items-center gap-1">
-                  Tanggal <SortIcon column="date" sortKey={sortKey} sortDir={sortDir} />
-                </div>
-              </th>
-              <th className={thClass} onClick={() => handleSort('batchNo')}>
-                <div className="flex items-center gap-1">
-                  Batch No <SortIcon column="batchNo" sortKey={sortKey} sortDir={sortDir} />
-                </div>
-              </th>
-              <th className={thClass} onClick={() => handleSort('productName')}>
-                <div className="flex items-center gap-1">
-                  Produk <SortIcon column="productName" sortKey={sortKey} sortDir={sortDir} />
-                </div>
-              </th>
-              <th className={thClass} onClick={() => handleSort('planningKg')}>
-                <div className="flex items-center gap-1">
-                  Planning (Kg) <SortIcon column="planningKg" sortKey={sortKey} sortDir={sortDir} />
-                </div>
-              </th>
-              <th className={thClass} onClick={() => handleSort('dryingMinutes')}>
-                <div className="flex items-center gap-1">
-                  Drying Time <SortIcon column="dryingMinutes" sortKey={sortKey} sortDir={sortDir} />
-                </div>
-              </th>
-              <th className={thClass}>Tahun</th>
+              {COLUMNS.map(col => (
+                <th key={col.key} className={thBase} onClick={() => handleSort(col.key)}>
+                  <div className="flex items-center gap-1">
+                    {col.label}
+                    <SortIcon column={col.key} sortKey={sortKey} sortDir={sortDir} />
+                  </div>
+                </th>
+              ))}
             </tr>
           </thead>
+
           <tbody>
             {paged.length === 0 ? (
               <tr>
-                <td colSpan={7} className="px-4 py-12 text-center text-slate-500 text-sm">
+                <td colSpan={COLUMNS.length + 1} className="px-4 py-12 text-center text-slate-500 text-sm">
                   Tidak ada data yang sesuai filter.
                 </td>
               </tr>
             ) : (
-              paged.map((row, i) => {
-                const rowNo = (page - 1) * PAGE_SIZE + i + 1;
-                return (
-                  <tr
-                    key={`${row.batchNo}-${i}`}
-                    className="border-b border-white/[0.03] table-row-hover transition-colors duration-150"
-                  >
-                    <td className="px-4 py-3 text-xs text-slate-600 text-center">{rowNo}</td>
-                    <td className={tdClass + " text-slate-400"}>{row.date}</td>
-                    <td className={tdClass}>
-                      <span className="font-mono text-xs text-amber-300/80">{row.batchNo}</span>
-                    </td>
-                    <td className={tdClass}>
-                      <span className="max-w-[220px] block truncate" title={row.productName}>
-                        {row.productName}
-                      </span>
-                    </td>
-                    <td className={tdClass + " text-center"}>
-                      <span className="px-2 py-0.5 rounded-full bg-slate-700/60 text-slate-300 text-xs">
-                        {row.planningKg} kg
-                      </span>
-                    </td>
-                    <td className={tdClass}>
-                      <span className="font-semibold text-amber-400">{row.subTotalDrying}</span>
-                    </td>
-                    <td className={tdClass + " text-slate-500"}>{row.year || '—'}</td>
-                  </tr>
-                );
-              })
+              paged.map((row, i) => (
+                <tr
+                  key={`${row.batchNo}-${i}`}
+                  className="border-b border-white/[0.03] table-row-hover transition-colors duration-150"
+                >
+                  <td className="px-4 py-3 text-xs text-slate-600 text-center">
+                    {(page - 1) * PAGE_SIZE + i + 1}
+                  </td>
+                  <td className={td + " text-slate-400"}>{row.date}</td>
+                  <td className={td}>
+                    <span className="font-mono text-xs text-amber-300/80">{row.batchNo}</span>
+                  </td>
+                  <td className={td}>
+                    <span className="font-mono text-xs text-sky-400/90">{row.codeProduct || '—'}</span>
+                  </td>
+                  <td className={td}>
+                    <span className="max-w-[200px] block truncate" title={row.productName}>
+                      {row.productName}
+                    </span>
+                  </td>
+                  <td className={td + " text-center"}>
+                    <span className="px-2 py-0.5 rounded-full bg-slate-700/60 text-slate-300 text-xs">
+                      {row.planningKg} kg
+                    </span>
+                  </td>
+                  <td className={td}>
+                    <span className="font-semibold text-amber-400">{row.subTotalDryingFinal}</span>
+                  </td>
+                  <td className={td + " text-slate-500"}>{row.year || '—'}</td>
+                </tr>
+              ))
             )}
           </tbody>
         </table>

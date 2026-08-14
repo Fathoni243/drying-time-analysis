@@ -13,30 +13,32 @@ import LoadingSpinner from './components/LoadingSpinner';
 export default function App() {
   const { data, loading, error, refetch, lastFetched } = useSheetData();
 
+  // ── Filter state ──────────────────────────────────────────────────────────
   const [filters, setFilters] = useState({
-    year: '',
-    product: '',
-    kg: '',
+    year:        '',
+    codeProduct: '',  // replaces old "product" (name-based) filter
+    kg:          '',
   });
 
   const handleFilterChange = (key, value) => {
     setFilters(prev => {
       const next = { ...prev, [key]: value };
-      // Cascade reset
-      if (key === 'year') { next.product = ''; next.kg = ''; }
-      if (key === 'product') { next.kg = ''; }
+      // Cascade reset on year change
+      if (key === 'year') { next.codeProduct = ''; next.kg = ''; }
+      // Reset kg when code product changes
+      if (key === 'codeProduct') { next.kg = ''; }
       return next;
     });
   };
 
-  const handleReset = () => setFilters({ year: '', product: '', kg: '' });
+  const handleReset = () => setFilters({ year: '', codeProduct: '', kg: '' });
 
-  // Apply filters to data
+  // ── Derived filtered data (used by Trend Chart, Stats Cards, Data Table) ──
   const filteredData = useMemo(() => {
     let d = data;
-    if (filters.year) d = d.filter(r => r.year === parseInt(filters.year));
-    if (filters.product) d = d.filter(r => r.productName === filters.product);
-    if (filters.kg) d = d.filter(r => r.planningKg === parseFloat(filters.kg));
+    if (filters.year)        d = d.filter(r => r.year === parseInt(filters.year));
+    if (filters.codeProduct) d = d.filter(r => r.codeProduct === filters.codeProduct);
+    if (filters.kg)          d = d.filter(r => r.planningKg === parseFloat(filters.kg));
     return d;
   }, [data, filters]);
 
@@ -45,7 +47,8 @@ export default function App() {
       <Header lastFetched={lastFetched} onRefresh={refetch} loading={loading} />
 
       <main className="max-w-[1600px] mx-auto px-4 sm:px-6 py-6">
-        {/* Error state */}
+
+        {/* ── Error banner ── */}
         {error && (
           <div className="mb-6 flex items-start gap-3 p-4 rounded-xl bg-red-500/10 border border-red-500/25 text-red-300 fade-in-up">
             <AlertTriangle className="w-5 h-5 shrink-0 mt-0.5 text-red-400" />
@@ -62,13 +65,13 @@ export default function App() {
           </div>
         )}
 
-        {/* Loading */}
+        {/* ── Loading ── */}
         {loading && !error && <LoadingSpinner />}
 
-        {/* Main dashboard */}
+        {/* ── Dashboard ── */}
         {!loading && !error && (
           <>
-            {/* Filter Bar */}
+            {/* Filters */}
             <FilterBar
               data={data}
               filters={filters}
@@ -84,10 +87,10 @@ export default function App() {
               <DryingTrendChart filteredData={filteredData} filters={filters} />
             </div>
 
-            {/* Bottom row: Bar Chart + Ticker side by side */}
+            {/* Bottom row: Bar Chart + Ticker Widget side by side */}
             <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 mb-6">
               <ProductCompareChart data={data} filters={filters} />
-              <DryingTickerWidget data={data} filters={filters} />
+              <DryingTickerWidget  data={data} filters={filters} />
             </div>
 
             {/* Data Table */}

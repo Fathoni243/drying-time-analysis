@@ -1,19 +1,32 @@
 import { useMemo } from 'react';
 import { LineChart, Line, ResponsiveContainer } from 'recharts';
-import { minutesToTime, timeToMinutes } from '../utils/timeUtils';
+import { minutesToTime } from '../utils/timeUtils';
 import { TrendingUp, TrendingDown, Minus } from 'lucide-react';
 
+// ── Trend calculation ────────────────────────────────────────────────────────
+
 /**
- * Calculate % change: avg of last N batches vs avg of first N batches
+ * Calculate % change between the average of the first N and last N batches.
+ * Negative = drying time decreased (faster = good ✅)
+ * Positive = drying time increased (slower = bad ⚠️)
  */
-function calcTrend(minuteArr, n = 5) {
+function calcTrendPct(minuteArr, n = 5) {
   if (minuteArr.length < 2) return 0;
-  const take = Math.min(n, Math.floor(minuteArr.length / 2));
+  const take  = Math.min(n, Math.floor(minuteArr.length / 2));
   if (take === 0) return 0;
   const first = minuteArr.slice(0, take).reduce((a, b) => a + b, 0) / take;
-  const last = minuteArr.slice(-take).reduce((a, b) => a + b, 0) / take;
+  const last  = minuteArr.slice(-take).reduce((a, b) => a + b, 0) / take;
   return ((last - first) / first) * 100;
 }
+
+/** Downsample an array to at most `maxPoints` evenly-spaced elements */
+function downsample(arr, maxPoints = 30) {
+  if (arr.length <= maxPoints) return arr;
+  const step = Math.floor(arr.length / maxPoints);
+  return arr.filter((_, i) => i % step === 0);
+}
+
+// ── Sub-components ────────────────────────────────────────────────────────────
 
 function Sparkline({ data, color }) {
   const points = data.map((v, i) => ({ v, i }));
@@ -33,27 +46,28 @@ function Sparkline({ data, color }) {
   );
 }
 
-function TickerRow({ name, sub, minuteArr, latestTime, pct, index }) {
-  const isDown = pct < -0.5;   // drying time turun = LEBIH CEPAT = hijau ✅
-  const isUp = pct > 0.5;      // drying time naik  = LEBIH LAMA  = merah ⚠️
-  const color = isDown ? '#10b981' : isUp ? '#ef4444' : '#94a3b8';
-  const bgColor = isDown
-    ? 'bg-emerald-500/5 hover:bg-emerald-500/10'
-    : isUp
-      ? 'bg-red-500/5 hover:bg-red-500/10'
+function TickerRow({ codeProduct, productName, sub, minuteArr, latestTime, pct, index }) {
+  // Colour logic: negative pct (faster) = green, positive (slower) = red
+  const isGood    = pct < -0.5;
+  const isBad     = pct > 0.5;
+  const color     = isGood ? '#10b981' : isBad ? '#ef4444' : '#94a3b8';
+  const rowBg     = isGood
+    ? 'hover:bg-emerald-500/10'
+    : isBad
+      ? 'hover:bg-red-500/10'
       : 'hover:bg-slate-700/20';
 
-  const Icon = isDown ? TrendingDown : isUp ? TrendingUp : Minus;
+  const Icon = isGood ? TrendingDown : isBad ? TrendingUp : Minus;
   const sign = pct > 0 ? '+' : '';
 
   return (
     <div
-      className={`flex items-center justify-between px-4 py-2.5 border-b border-white/[0.04] last:border-0 transition-colors duration-150 ${bgColor}`}
+      className={`flex items-center justify-between px-4 py-2.5 border-b border-white/[0.04] last:border-0 transition-colors duration-150 ${rowBg}`}
       style={{ animationDelay: `${index * 40}ms` }}
     >
-      {/* Left: name */}
+      {/* Left: code + product name */}
       <div className="min-w-0 flex-1 pr-3">
-        <p className="text-sm font-semibold text-slate-200 truncate leading-tight">{name}</p>
+        <p className="text-sm font-bold text-slate-100 truncate leading-tight">{codeProduct}</p>
         <p className="text-xs text-slate-500 truncate mt-0.5">{sub}</p>
       </div>
 
@@ -62,7 +76,7 @@ function TickerRow({ name, sub, minuteArr, latestTime, pct, index }) {
         <Sparkline data={minuteArr} color={color} />
       </div>
 
-      {/* Right: pct + value */}
+      {/* Right: % change + latest drying time */}
       <div className="shrink-0 text-right min-w-[80px]">
         <div className="flex items-center justify-end gap-1 mb-0.5">
           <Icon className="w-3 h-3" style={{ color }} />
@@ -76,42 +90,48 @@ function TickerRow({ name, sub, minuteArr, latestTime, pct, index }) {
   );
 }
 
+// ── Main component ────────────────────────────────────────────────────────────
+
 export default function DryingTickerWidget({ data, filters }) {
   const tickers = useMemo(() => {
-    // Apply year filter only (show all products as tickers)
+    // Apply year + kg filters (code product filter is intentionally NOT applied here
+    // so the ticker always shows the full landscape of products)
     let source = data;
     if (filters.year) source = source.filter(d => d.year === parseInt(filters.year));
-    if (filters.kg) source = source.filter(d => d.planningKg === parseFloat(filters.kg));
+    if (filters.kg)   source = source.filter(d => d.planningKg === parseFloat(filters.kg));
 
-    // Group by nameKg
+    // Group by codeProduct
     const groups = {};
     source.forEach(d => {
-      const key = d.nameKg || `${d.productName} (${d.planningKg} kg)`;
-      if (!groups[key]) groups[key] = { productName: d.productName, kg: d.planningKg, items: [] };
+      const key = d.codeProduct || d.productName;
+      if (!groups[key]) {
+        groups[key] = {
+          codeProduct: d.codeProduct || key,
+          productName: d.productName,
+          planningKg:  d.planningKg,
+          items:       [],
+        };
+      }
       groups[key].items.push(d);
     });
 
-    return Object.entries(groups)
-      .map(([key, val]) => {
-        // Keep chronological order (assume data comes ordered by date)
-        const minuteArr = val.items.map(d => d.dryingMinutes);
-        const pct = calcTrend(minuteArr, 5);
-        const latest = minuteArr[minuteArr.length - 1];
-        // Downsample for sparkline (max 30 points)
-        const step = Math.max(1, Math.floor(minuteArr.length / 30));
-        const sampled = minuteArr.filter((_, i) => i % step === 0);
+    return Object.values(groups)
+      .map(g => {
+        const minuteArr = g.items.map(d => d.dryingMinutes);
+        const pct       = calcTrendPct(minuteArr, 5);
+        const latest    = minuteArr[minuteArr.length - 1];
 
         return {
-          key,
-          name: val.productName,
-          sub: `${val.kg} kg · ${val.items.length} batch`,
-          minuteArr: sampled,
-          latestTime: minutesToTime(latest),
+          codeProduct: g.codeProduct,
+          productName: g.productName,
+          sub:         `${g.productName} · ${g.planningKg} kg · ${g.items.length} batch`,
+          minuteArr:   downsample(minuteArr, 30),
+          latestTime:  minutesToTime(latest),
           pct,
-          absChange: Math.abs(pct),
+          absChange:   Math.abs(pct),
         };
       })
-      // Sort by absolute change desc (most volatile first)
+      // Most volatile products first
       .sort((a, b) => b.absChange - a.absChange);
   }, [data, filters]);
 
@@ -136,9 +156,9 @@ export default function DryingTickerWidget({ data, filters }) {
       {/* Subtitle */}
       <div className="px-4 py-2 bg-[#0d1528]/40 border-b border-white/[0.04]">
         <p className="text-xs text-slate-500">
-          % perubahan = rata-rata 5 batch terakhir vs 5 batch pertama
+          % perubahan = avg 5 batch terakhir vs 5 batch pertama
           {filters.year ? ` · Tahun ${filters.year}` : ''}
-          {filters.kg ? ` · ${filters.kg} kg` : ''}
+          {filters.kg   ? ` · ${filters.kg} kg`      : ''}
         </p>
       </div>
 
@@ -150,7 +170,7 @@ export default function DryingTickerWidget({ data, filters }) {
           </div>
         ) : (
           tickers.map((t, i) => (
-            <TickerRow key={t.key} {...t} index={i} />
+            <TickerRow key={t.codeProduct} {...t} index={i} />
           ))
         )}
       </div>
@@ -158,7 +178,7 @@ export default function DryingTickerWidget({ data, filters }) {
       {/* Footer */}
       <div className="px-4 py-2.5 border-t border-white/[0.04] bg-[#0d1528]/40">
         <p className="text-xs text-slate-600 text-center">
-          {tickers.length} produk/varian · diurutkan berdasarkan perubahan terbesar
+          {tickers.length} code product · diurutkan perubahan terbesar
         </p>
       </div>
     </div>

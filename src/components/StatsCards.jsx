@@ -53,8 +53,8 @@ export default function StatsCards({ filteredData }) {
       max: minutesToTime(max),
       minBatch: minRow?.batchNo || '',
       maxBatch: maxRow?.batchNo || '',
-      minProduct: minRow?.nameKg || '',
-      maxProduct: maxRow?.nameKg || '',
+      minProduct: minRow?.variantName + ' | ' + minRow?.codeProduct || '',
+      maxProduct: maxRow?.variantName + ' | ' + maxRow?.codeProduct || '',
     };
   }, [filteredData]);
 
