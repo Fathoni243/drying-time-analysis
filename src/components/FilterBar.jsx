@@ -2,14 +2,14 @@ import { useMemo, useState, useRef, useEffect } from 'react';
 import { SlidersHorizontal, X, Calendar, Tag, Weight, Search } from 'lucide-react';
 
 export default function FilterBar({ data, filters, onFilterChange, onReset }) {
-  const [codeSearch, setCodeSearch]         = useState(filters.codeProduct || '');
+  const [codeSearch, setCodeSearch] = useState(filters.codeProduct || '');
   const [showSuggestions, setShowSuggestions] = useState(false);
   const inputRef    = useRef(null);
   const dropdownRef = useRef(null);
 
-  // Sync search text when filters are reset externally
+  // Sync local search text whenever the external filter changes (e.g. ticker click)
   useEffect(() => {
-    if (!filters.codeProduct) setCodeSearch('');
+    setCodeSearch(filters.codeProduct || '');
   }, [filters.codeProduct]);
 
   // Close dropdown on outside click
@@ -100,7 +100,7 @@ export default function FilterBar({ data, filters, onFilterChange, onReset }) {
   `;
 
   return (
-    <div className="glass-card p-5 mb-6 fade-in-up">
+    <div id="filter-bar-section" className="glass-card p-5 mb-6 fade-in-up">
       {/* Title row */}
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">

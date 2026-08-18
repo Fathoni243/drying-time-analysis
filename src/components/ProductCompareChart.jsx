@@ -98,7 +98,7 @@ export default function ProductCompareChart({ data, filters }) {
       <div className="flex items-start justify-between mb-6 flex-wrap gap-3">
         <div>
           <h2 className="text-base font-semibold text-slate-100">
-            Perbandingan Rata-rata Drying per Produk
+            Perbandingan Rata-rata Drying Time per Produk
           </h2>
           <p className="text-xs text-slate-500 mt-1">
             {filters.year ? `Tahun ${filters.year}` : 'Semua tahun'}

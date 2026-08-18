@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useTransition } from 'react';
 import { AlertTriangle } from 'lucide-react';
 import { useSheetData } from './hooks/useSheetData';
 import Header from './components/Header';
@@ -9,6 +9,7 @@ import ProductCompareChart from './components/ProductCompareChart';
 import DryingTickerWidget from './components/DryingTickerWidget';
 import DataTable from './components/DataTable';
 import LoadingSpinner from './components/LoadingSpinner';
+import FilterTransitionOverlay from './components/FilterTransitionOverlay';
 
 export default function App() {
   const { data, loading, error, refetch, lastFetched } = useSheetData();
@@ -20,18 +21,22 @@ export default function App() {
     kg:          '',
   });
 
+  const [isPending, startTransition] = useTransition();
+
   const handleFilterChange = (key, value) => {
-    setFilters(prev => {
-      const next = { ...prev, [key]: value };
-      // Cascade reset on year change
-      if (key === 'year') { next.codeProduct = ''; next.kg = ''; }
-      // Reset kg when code product changes
-      if (key === 'codeProduct') { next.kg = ''; }
-      return next;
+    startTransition(() => {
+      setFilters(prev => {
+        const next = { ...prev, [key]: value };
+        // Cascade reset on year change
+        if (key === 'year') { next.codeProduct = ''; next.kg = ''; }
+        // Reset kg when code product changes
+        if (key === 'codeProduct') { next.kg = ''; }
+        return next;
+      });
     });
   };
 
-  const handleReset = () => setFilters({ year: '', codeProduct: '', kg: '' });
+  const handleReset = () => startTransition(() => setFilters({ year: '', codeProduct: '', kg: '' }));
 
   // ── Derived filtered data (used by Trend Chart, Stats Cards, Data Table) ──
   const filteredData = useMemo(() => {
@@ -45,6 +50,9 @@ export default function App() {
   return (
     <div className="min-h-screen bg-mesh">
       <Header lastFetched={lastFetched} onRefresh={refetch} loading={loading} />
+
+      {/* Filter transition overlay — blocks interaction during heavy re-render */}
+      <FilterTransitionOverlay show={isPending} />
 
       <main className="max-w-[1600px] mx-auto px-4 sm:px-6 py-6">
 
@@ -90,7 +98,7 @@ export default function App() {
             {/* Bottom row: Bar Chart + Ticker Widget side by side */}
             <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 mb-6">
               <ProductCompareChart data={data} filters={filters} />
-              <DryingTickerWidget  data={data} filters={filters} />
+              <DryingTickerWidget  data={data} filters={filters} onFilterApply={handleFilterChange} onFilterReset={handleReset} />
             </div>
 
             {/* Data Table */}

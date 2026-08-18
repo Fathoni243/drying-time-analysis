@@ -219,8 +219,8 @@ export default function DryingTrendChart({ filteredData, filters }) {
     if (filters.kg)          parts.push(`(${filters.kg} Kg)`);
     if (filters.year)        parts.push(`Tahun ${filters.year}`);
     return parts.length > 0
-      ? `Trend Drying: ${parts.join(' ')}`
-      : 'Trend Sub Total Drying (Semua Produk)';
+      ? `Trend Drying Time: ${parts.join(' ')}`
+      : 'Trend Sub Total Drying Time (Semua Produk)';
   }, [filters]);
 
   const yDomain = useMemo(() => {
