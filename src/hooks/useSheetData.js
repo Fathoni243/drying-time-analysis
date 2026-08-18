@@ -5,6 +5,14 @@ const SPREADSHEET_ID = import.meta.env.VITE_SPREADSHEET_ID;
 const API_KEY        = import.meta.env.VITE_GOOGLE_API_KEY;
 const SHEET_NAME     = import.meta.env.VITE_SHEET_NAME || 'Sheet1';
 
+// ── Source column toggle ────────────────────────────────────────────────────
+//
+// Ganti nilai di bawah untuk berpindah kolom sumber drying time:
+//   'sub total drying'       → kolom "Sub Total Drying" (plain)
+//   'sub total drying final' → kolom "Sub Total Drying Final"
+//
+const DRYING_COLUMN_SOURCE = 'sub total drying';
+
 // ── Column detection helpers ────────────────────────────────────────────────
 
 /**
@@ -37,7 +45,7 @@ function cell(row, idx) {
  * @property {string}      codeProduct         - e.g. "9059783"
  * @property {string}      productName         - e.g. "Brown Sugar EF100"
  * @property {number}      planningKg          - e.g. 400
- * @property {string}      subTotalDryingFinal - "HH:MM" — the main drying time value
+ * @property {string}      subTotalDryingFinal - "HH:MM" — the main drying time value (source: DRYING_COLUMN_SOURCE)
  * @property {number}      dryingMinutes       - Converted minutes from subTotalDryingFinal
  * @property {number|null} year                - e.g. 2021
  * @property {string}      variantName         - e.g. "Brown Sugar EF100 (400 kg)"
@@ -48,8 +56,8 @@ function cell(row, idx) {
 /**
  * Custom hook: fetch and parse drying-time data from Google Sheets API v4.
  *
- * Columns fetched: A:L (Date → Sub Total Drying Final)
- * Columns skipped: Sub Total Drying (plain), Mechanic Issue, Electric Issue, Others
+ * Columns fetched: A:L
+ * Active source  : controlled by DRYING_COLUMN_SOURCE constant above
  *
  * @returns {{ data: DryingRow[], loading: boolean, error: string|null, refetch: Function, lastFetched: Date|null }}
  */
@@ -64,7 +72,7 @@ export function useSheetData() {
     setError(null);
 
     try {
-      // Fetch up to column L to capture "Sub Total Drying Final"
+      // Fetch up to column L — covers both "Sub Total Drying" and "Sub Total Drying Final"
       const range = encodeURIComponent(`${SHEET_NAME}!A:L`);
       const url   = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/${range}?key=${API_KEY}`;
 
@@ -93,8 +101,9 @@ export function useSheetData() {
         planningKg:          findCol(headers, ['planning']),
         year:                findCol(headers, ['year']),
         variantName:         findCol(headers, ['variant name', 'name+kg', 'namekg']),
-        // "sub total drying final" must be matched before plain "sub total drying"
-        subTotalDryingFinal: findCol(headers, ['sub total drying final']),
+        // Source column dipilih oleh konstanta DRYING_COLUMN_SOURCE di atas file ini.
+        // Gunakan array jika ingin fallback: misalnya ['sub total drying final', 'sub total drying']
+        subTotalDryingFinal: findCol(headers, [DRYING_COLUMN_SOURCE]),
       };
 
       // ── Parse data rows ────────────────────────────────────────────────────
