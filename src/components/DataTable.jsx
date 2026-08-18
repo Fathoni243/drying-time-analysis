@@ -138,7 +138,7 @@ export default function DataTable({ filteredData }) {
 
           {/* Pagination */}
           <div className="flex items-center gap-2 text-xs text-slate-400">
-            <span>Hlm {page} / {totalPages || 1}</span>
+            <span>Page {page} / {totalPages || 1}</span>
             <button
               id="btn-table-prev"
               onClick={() => setPage(p => Math.max(1, p - 1))}
