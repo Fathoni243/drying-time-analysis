@@ -10,6 +10,7 @@ import DryingTickerWidget from './components/DryingTickerWidget';
 import DataTable from './components/DataTable';
 import LoadingSpinner from './components/LoadingSpinner';
 import FilterTransitionOverlay from './components/FilterTransitionOverlay';
+import { formatedDate } from './utils/dateFormat';
 
 export default function App() {
   const { data, loading, error, refetch, lastFetched } = useSheetData();
@@ -47,9 +48,11 @@ export default function App() {
     return d;
   }, [data, filters]);
 
+  const latestData = data.at(-1);
+
   return (
     <div className="min-h-screen bg-mesh">
-      <Header lastFetched={lastFetched} onRefresh={refetch} loading={loading} />
+      <Header lastFetched={lastFetched} onRefresh={refetch} loading={loading} latestData={latestData} />
 
       {/* Filter transition overlay — blocks interaction during heavy re-render */}
       <FilterTransitionOverlay show={isPending} />
@@ -107,8 +110,8 @@ export default function App() {
             {/* Footer */}
             <footer className="text-center py-4 text-xs text-slate-600 border-t border-white/[0.04]">
               Drying Time Analysis Dashboard · Data diambil dari Google Sheets
-              {lastFetched && (
-                <span> · Terakhir diperbarui {lastFetched.toLocaleString('id-ID')}</span>
+              {latestData?.date && (
+                <span> · Terakhir diperbarui <span className="text-amber-400 font-medium">{formatedDate(latestData.date)}</span></span>
               )}
             </footer>
           </>

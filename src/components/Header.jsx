@@ -1,6 +1,7 @@
 import { BarChart2, Droplets, RefreshCw } from 'lucide-react';
+import { formatedDate } from '../utils/dateFormat';
 
-export default function Header({ lastFetched, onRefresh, loading }) {
+export default function Header({ lastFetched, onRefresh, loading, latestData }) {
   return (
     <header className="relative overflow-hidden border-b border-amber-500/10 bg-[#0d1528]/80 backdrop-blur-xl">
       {/* Ambient glow */}
@@ -22,8 +23,8 @@ export default function Header({ lastFetched, onRefresh, loading }) {
           </div>
         </div>
 
-        {/* Center decorative pills */}
-        <div className="hidden md:flex items-center gap-2">
+        {/* Center decorative pills - ditampilkan di layar besar (lg+) agar tidak bertabrakan di iPad */}
+        <div className="hidden lg:flex items-center gap-2">
           <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/20">
             <div className="w-1.5 h-1.5 rounded-full bg-amber-400 pulse-amber" />
             <span className="text-xs text-amber-400 font-medium">Live Data</span>
@@ -35,12 +36,21 @@ export default function Header({ lastFetched, onRefresh, loading }) {
         </div>
 
         {/* Right: last updated + refresh */}
-        <div className="flex items-center gap-3">
-          {lastFetched && (
-            <span className="hidden sm:block text-xs text-slate-500">
-              Diperbarui: {lastFetched.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
-            </span>
-          )}
+        <div className="flex items-center gap-3 shrink-0">
+          <div className="hidden sm:flex flex-col items-end text-right whitespace-nowrap">
+            {lastFetched && (
+              <span className="text-[11px] text-slate-400 leading-tight">
+                Last Refresh: <span className="text-slate-300 font-mono">{lastFetched.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}</span>
+              </span>
+            )}
+
+            {latestData?.date && (
+              <span className="text-xs text-slate-400 leading-tight mt-0.5">
+                Latest Data: <span className="text-amber-400">{formatedDate(latestData.date)}</span>
+              </span>
+            )}
+          </div>
+
           <button
             id="btn-refresh"
             onClick={onRefresh}
