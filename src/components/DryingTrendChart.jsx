@@ -188,7 +188,7 @@ function formatYTick(minutes) {
   return minutesToTime(minutes);
 }
 
-export default function DryingTrendChart({ filteredData, filters }) {
+export default function DryingTrendChart({ filteredData, filters, yearBounds }) {
   const [popupData, setPopupData] = useState(null);
 
   const handleDotClick = useCallback((payload) => {
@@ -214,14 +214,20 @@ export default function DryingTrendChart({ filteredData, filters }) {
   }, [chartData]);
 
   const title = useMemo(() => {
+    const effectiveYearStart = filters.yearStart || yearBounds?.min || '';
+    const effectiveYearEnd   = filters.yearEnd   || yearBounds?.max || '';
+    const isAllYears = effectiveYearStart === yearBounds?.min &&
+                       effectiveYearEnd   === yearBounds?.max;
+    const yearLabel = isAllYears ? 'Semua Tahun' : `Tahun ${effectiveYearStart} s/d ${effectiveYearEnd}`;
+
     const parts = [];
-    if (filters.codeProduct) parts.push(`Code: ${filters.codeProduct}`);
+    if (filters.codeProduct) parts.push(`${filters.codeProduct}`);
     if (filters.kg)          parts.push(`(${filters.kg} Kg)`);
-    if (filters.year)        parts.push(`Tahun ${filters.year}`);
+    if (yearLabel)           parts.push(yearLabel);
     return parts.length > 0
       ? `Trend Drying Time: ${parts.join(' ')}`
       : 'Trend Sub Total Drying Time (Semua Produk)';
-  }, [filters]);
+  }, [filters, yearBounds]);
 
   const yDomain = useMemo(() => {
     if (!chartData.length) return [0, 360];

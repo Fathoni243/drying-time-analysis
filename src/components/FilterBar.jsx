@@ -33,11 +33,24 @@ export default function FilterBar({ data, filters, onFilterChange, onReset }) {
     return Array.from(set).sort((a, b) => a - b);
   }, [data]);
 
-  /** Unique Code Products, filtered by selected year */
+  // Default yearStart = tahun pertama, yearEnd = tahun terakhir dari data
+  const defaultYearStart = years[0] ?? '';
+  const defaultYearEnd   = years[years.length - 1] ?? '';
+
+  // Nilai aktual yang dipakai (kosong → fallback ke default)
+  const activeYearStart = filters.yearStart || defaultYearStart;
+  const activeYearEnd   = filters.yearEnd   || defaultYearEnd;
+
+  // Error state: tahun mulai lebih besar dari tahun selesai
+  const yearRangeError =
+    activeYearStart && activeYearEnd &&
+    parseInt(activeYearStart) > parseInt(activeYearEnd);
+
+  /** Unique Code Products, filtered by selected year range */
   const codeProductOptions = useMemo(() => {
-    const source = filters.year
-      ? data.filter(d => d.year === parseInt(filters.year))
-      : data;
+    let source = data;
+    if (activeYearStart) source = source.filter(d => d.year >= parseInt(activeYearStart));
+    if (activeYearEnd)   source = source.filter(d => d.year <= parseInt(activeYearEnd));
 
     // Build a map: codeProduct → productName (for display hint)
     const map = new Map();
@@ -57,18 +70,19 @@ export default function FilterBar({ data, filters, onFilterChange, onReset }) {
         code.toLowerCase().includes(q) ||
         name.toLowerCase().includes(q)
     );
-  }, [data, filters.year, codeSearch]);
+  }, [data, activeYearStart, activeYearEnd, codeSearch]);
 
-  /** Planning (Kg) options, filtered by year + selected code product */
+  /** Planning (Kg) options, filtered by year range + selected code product */
   const kgOptions = useMemo(() => {
     let source = data;
-    if (filters.year)        source = source.filter(d => d.year === parseInt(filters.year));
+    if (activeYearStart)     source = source.filter(d => d.year >= parseInt(activeYearStart));
+    if (activeYearEnd)       source = source.filter(d => d.year <= parseInt(activeYearEnd));
     if (filters.codeProduct) source = source.filter(d => d.codeProduct === filters.codeProduct);
     const set = new Set(source.map(d => d.planningKg).filter(v => v > 0));
     return Array.from(set).sort((a, b) => a - b);
-  }, [data, filters.year, filters.codeProduct]);
+  }, [data, activeYearStart, activeYearEnd, filters.codeProduct]);
 
-  const hasActiveFilter = filters.year || filters.codeProduct || filters.kg;
+  const hasActiveFilter = filters.yearStart || filters.yearEnd || filters.codeProduct || filters.kg;
 
   // ── Event handlers ───────────────────────────────────────────────────────
 
@@ -126,21 +140,58 @@ export default function FilterBar({ data, filters, onFilterChange, onReset }) {
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
 
-        {/* ── Year ── */}
+        {/* ── Year Range ── */}
         <div className="space-y-1.5">
           <label className="flex items-center gap-1.5 text-xs text-slate-400 font-medium">
             <Calendar className="w-3.5 h-3.5 text-amber-500/70" />
             Tahun
           </label>
-          <select
-            id="filter-year"
-            className={selectClass}
-            value={filters.year}
-            onChange={e => onFilterChange('year', e.target.value)}
-          >
-            <option value="">Semua Tahun</option>
-            {years.map(y => <option key={y} value={y}>{y}</option>)}
-          </select>
+
+          {/* Two dropdowns + "s/d" separator */}
+          <div className="flex items-center gap-2">
+            {/* Year Start */}
+            <select
+              id="filter-year-start"
+              className={`flex-1 bg-[#0d1528] border text-slate-200 text-sm rounded-xl
+                px-3 py-2.5 focus:outline-none focus:ring-1 focus:ring-amber-500/30
+                hover:border-amber-500/30 transition-all duration-200 cursor-pointer
+                ${yearRangeError
+                  ? 'border-red-500/60 focus:border-red-500/80 focus:ring-red-500/20'
+                  : 'border-amber-500/15 focus:border-amber-500/50'
+                }`}
+              value={filters.yearStart || defaultYearStart}
+              onChange={e => onFilterChange('yearStart', e.target.value)}
+            >
+              {years.map(y => <option key={y} value={y}>{y}</option>)}
+            </select>
+
+            {/* Separator */}
+            <span className="text-xs text-slate-500 shrink-0 font-medium">s/d</span>
+
+            {/* Year End */}
+            <select
+              id="filter-year-end"
+              className={`flex-1 bg-[#0d1528] border text-slate-200 text-sm rounded-xl
+                px-3 py-2.5 focus:outline-none focus:ring-1 focus:ring-amber-500/30
+                hover:border-amber-500/30 transition-all duration-200 cursor-pointer
+                ${yearRangeError
+                  ? 'border-red-500/60 focus:border-red-500/80 focus:ring-red-500/20'
+                  : 'border-amber-500/15 focus:border-amber-500/50'
+                }`}
+              value={filters.yearEnd || defaultYearEnd}
+              onChange={e => onFilterChange('yearEnd', e.target.value)}
+            >
+              {years.map(y => <option key={y} value={y}>{y}</option>)}
+            </select>
+          </div>
+
+          {/* Error state */}
+          {yearRangeError && (
+            <p className="flex items-center gap-1 text-[11px] text-red-400 mt-1 animate-pulse">
+              <span className="inline-block w-1 h-1 rounded-full bg-red-400 shrink-0" />
+              Tahun mulai tidak boleh melebihi tahun selesai
+            </p>
+          )}
         </div>
 
         {/* ── Code Product (searchable) ── */}

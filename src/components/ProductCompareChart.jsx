@@ -39,15 +39,25 @@ function CustomTooltip({ active, payload }) {
   );
 }
 
-export default function ProductCompareChart({ data, filters }) {
+export default function ProductCompareChart({ data, filters, yearBounds }) {
+  // ── Resolusi label tahun ──
+  // Gunakan filter aktif atau fallback ke batas dataset
+  const effectiveYearStart = filters.yearStart || yearBounds?.min || '';
+  const effectiveYearEnd   = filters.yearEnd   || yearBounds?.max || '';
+  const isAllYears = effectiveYearStart === yearBounds?.min &&
+                     effectiveYearEnd   === yearBounds?.max;
+  const yearLabel = isAllYears
+    ? 'Semua tahun'
+    : `Tahun ${effectiveYearStart} s/d ${effectiveYearEnd}`;
   /**
    * Group data by Code Product (+ Kg if kg filter is active).
    * Apply Year and Kg filters, then compute average drying time per group.
    */
   const chartData = useMemo(() => {
     let source = data;
-    if (filters.year) source = source.filter(d => d.year === parseInt(filters.year));
-    if (filters.kg)   source = source.filter(d => d.planningKg === parseFloat(filters.kg));
+    if (filters.yearStart) source = source.filter(d => d.year >= parseInt(filters.yearStart));
+    if (filters.yearEnd)   source = source.filter(d => d.year <= parseInt(filters.yearEnd));
+    if (filters.kg)        source = source.filter(d => d.planningKg === parseFloat(filters.kg));
 
     // Group by codeProduct
     const groups = {};
@@ -84,7 +94,7 @@ export default function ProductCompareChart({ data, filters }) {
 
   if (!chartData.length) {
     return (
-      <div className="glass-card p-6 mb-6 flex flex-col items-center justify-center min-h-[260px]">
+      <div className="glass-card p-6 flex flex-col items-center justify-center min-h-[260px]">
         <BarChart2 className="w-12 h-12 text-slate-600 mb-3" />
         <p className="text-slate-500 text-sm">Tidak ada data perbandingan.</p>
       </div>
@@ -94,14 +104,14 @@ export default function ProductCompareChart({ data, filters }) {
   const chartHeight = Math.max(280, chartData.length * 42 + 80);
 
   return (
-    <div className="glass-card p-6 mb-6 fade-in-up">
-      <div className="flex items-start justify-between mb-6 flex-wrap gap-3">
+    <div className="glass-card p-6 fade-in-up">
+      <div className="flex items-start justify-between flex-wrap gap-3">
         <div>
           <h2 className="text-base font-semibold text-slate-100">
             Perbandingan Rata-rata Drying Time per Produk
           </h2>
           <p className="text-xs text-slate-500 mt-1">
-            {filters.year ? `Tahun ${filters.year}` : 'Semua tahun'}
+            {yearLabel}
             {filters.kg ? ` · ${filters.kg} kg` : ''}
             {' · '}{chartData.length} code product
           </p>

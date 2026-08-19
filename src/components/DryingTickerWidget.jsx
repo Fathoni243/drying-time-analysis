@@ -148,7 +148,7 @@ function SortGroup({ value, onChange }) {
 
 // ── Main component ────────────────────────────────────────────────────────────
 
-export default function DryingTickerWidget({ data, filters, onFilterApply, onFilterReset }) {
+export default function DryingTickerWidget({ data, filters, yearBounds, onFilterApply, onFilterReset }) {
   const [search, setSearch]     = useState('');
   const [sortMode, setSortMode] = useState('volatile');
 
@@ -179,11 +179,12 @@ export default function DryingTickerWidget({ data, filters, onFilterApply, onFil
   };
 
   const tickers = useMemo(() => {
-    // Apply year + kg filters from FilterBar
+    // Apply year range + kg filters from FilterBar
     // (codeProduct filter intentionally NOT applied so ticker shows full landscape)
     let source = data;
-    if (filters.year) source = source.filter(d => d.year === parseInt(filters.year));
-    if (filters.kg)   source = source.filter(d => d.planningKg === parseFloat(filters.kg));
+    if (filters.yearStart) source = source.filter(d => d.year >= parseInt(filters.yearStart));
+    if (filters.yearEnd)   source = source.filter(d => d.year <= parseInt(filters.yearEnd));
+    if (filters.kg)        source = source.filter(d => d.planningKg === parseFloat(filters.kg));
 
     // Group by codeProduct
     const groups = {};
@@ -216,7 +217,7 @@ export default function DryingTickerWidget({ data, filters, onFilterApply, onFil
         absChange:   Math.abs(pct),
       };
     });
-  }, [data, filters.year, filters.kg]);
+  }, [data, filters.yearStart, filters.yearEnd, filters.kg]);
 
   // Search filter
   const searched = useMemo(() => {
@@ -284,8 +285,13 @@ export default function DryingTickerWidget({ data, filters, onFilterApply, onFil
       <div className="px-4 py-2 bg-[#0d1528]/40 border-b border-white/[0.04]">
         <p className="text-xs text-slate-500">
           % perubahan = avg 5 batch terakhir vs 5 batch pertama
-          {filters.year ? ` · Tahun ${filters.year}` : ''}
-          {filters.kg   ? ` · ${filters.kg} kg`      : ''}
+          {(() => {
+            const ys = filters.yearStart || yearBounds?.min || '';
+            const ye = filters.yearEnd   || yearBounds?.max || '';
+            const isAll = String(ys) === String(yearBounds?.min) && String(ye) === String(yearBounds?.max);
+            return isAll ? ' · Semua Tahun' : ` · Tahun ${ys} s/d ${ye}`;
+          })()}
+          {filters.kg ? ` · ${filters.kg} kg` : ''}
           {' · '}
           <span className="text-slate-600 italic">Klik baris untuk filter</span>
         </p>
@@ -318,7 +324,7 @@ export default function DryingTickerWidget({ data, filters, onFilterApply, onFil
       </div>
 
       {/* Ticker list */}
-      <div className="overflow-y-auto flex-1" style={{ maxHeight: '460px' }}>
+      <div className="overflow-y-auto flex-1" style={{ maxHeight: '540px' }}>
         {sorted.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-32 gap-2 text-slate-500 text-sm">
             {search ? (

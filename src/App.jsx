@@ -17,7 +17,8 @@ export default function App() {
 
   // ── Filter state ──────────────────────────────────────────────────────────
   const [filters, setFilters] = useState({
-    year:        '',
+    yearStart:   '',  // tahun mulai (default: tahun paling awal dari data)
+    yearEnd:     '',  // tahun selesai (default: tahun paling akhir dari data)
     codeProduct: '',  // replaces old "product" (name-based) filter
     kg:          '',
   });
@@ -28,8 +29,8 @@ export default function App() {
     startTransition(() => {
       setFilters(prev => {
         const next = { ...prev, [key]: value };
-        // Cascade reset on year change
-        if (key === 'year') { next.codeProduct = ''; next.kg = ''; }
+        // Cascade reset on year range change
+        if (key === 'yearStart' || key === 'yearEnd') { next.codeProduct = ''; next.kg = ''; }
         // Reset kg when code product changes
         if (key === 'codeProduct') { next.kg = ''; }
         return next;
@@ -37,18 +38,25 @@ export default function App() {
     });
   };
 
-  const handleReset = () => startTransition(() => setFilters({ year: '', codeProduct: '', kg: '' }));
+  const handleReset = () => startTransition(() => setFilters({ yearStart: '', yearEnd: '', codeProduct: '', kg: '' }));
 
   // ── Derived filtered data (used by Trend Chart, Stats Cards, Data Table) ──
   const filteredData = useMemo(() => {
     let d = data;
-    if (filters.year)        d = d.filter(r => r.year === parseInt(filters.year));
+    if (filters.yearStart)   d = d.filter(r => r.year >= parseInt(filters.yearStart));
+    if (filters.yearEnd)     d = d.filter(r => r.year <= parseInt(filters.yearEnd));
     if (filters.codeProduct) d = d.filter(r => r.codeProduct === filters.codeProduct);
     if (filters.kg)          d = d.filter(r => r.planningKg === parseFloat(filters.kg));
     return d;
   }, [data, filters]);
 
   const latestData = data.at(-1);
+
+  // ── Year bounds dari seluruh dataset (untuk label "Semua Tahun" vs range) ──
+  const yearBounds = useMemo(() => {
+    const years = Array.from(new Set(data.map(d => d.year).filter(Boolean))).sort((a, b) => a - b);
+    return { min: years[0] ?? '', max: years[years.length - 1] ?? '' };
+  }, [data]);
 
   return (
     <div className="min-h-screen bg-mesh">
@@ -95,13 +103,13 @@ export default function App() {
 
             {/* Trend Chart — always full width */}
             <div className="mb-6">
-              <DryingTrendChart filteredData={filteredData} filters={filters} />
+              <DryingTrendChart filteredData={filteredData} filters={filters} yearBounds={yearBounds} />
             </div>
 
             {/* Bottom row: Bar Chart + Ticker Widget side by side */}
             <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 mb-6">
-              <ProductCompareChart data={data} filters={filters} />
-              <DryingTickerWidget  data={data} filters={filters} onFilterApply={handleFilterChange} onFilterReset={handleReset} />
+              <ProductCompareChart data={data} filters={filters} yearBounds={yearBounds} />
+              <DryingTickerWidget  data={data} filters={filters} yearBounds={yearBounds} onFilterApply={handleFilterChange} onFilterReset={handleReset} />
             </div>
 
             {/* Data Table */}
