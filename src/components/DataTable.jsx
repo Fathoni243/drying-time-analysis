@@ -1,9 +1,9 @@
 import { useState, useMemo } from 'react';
-import * as XLSX from 'xlsx';
 import {
   ChevronUp, ChevronDown, ChevronsUpDown,
   ChevronLeft, ChevronRight, TableProperties, FileDown
 } from 'lucide-react';
+import { exportDataDetailToExcel } from '../utils/excel/exportDataDetail';
 
 const PAGE_SIZE = 15;
 
@@ -16,37 +16,6 @@ function SortIcon({ column, sortKey, sortDir }) {
     : <ChevronDown className="w-3 h-3 text-amber-400" />;
 }
 
-function exportToExcel(rows) {
-  const sheet = XLSX.utils.json_to_sheet(
-    rows.map((r, i) => ({
-      'No':                    i + 1,
-      'Tanggal':               r.date,
-      'Batch No':              r.batchNo,
-      'Code Product':          r.codeProduct,
-      'Product Name':          r.productName,
-      'Planning (Kg)':         r.planningKg,
-      'Sub Total Drying Final': r.subTotalDryingFinal,
-      'Tahun':                 r.year ?? '',
-    }))
-  );
-
-  sheet['!cols'] = [
-    { wch: 5  }, // No
-    { wch: 13 }, // Tanggal
-    { wch: 16 }, // Batch No
-    { wch: 14 }, // Code Product
-    { wch: 36 }, // Product Name
-    { wch: 14 }, // Planning (Kg)
-    { wch: 20 }, // Sub Total Drying Final
-    { wch: 8  }, // Tahun
-  ];
-
-  const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, sheet, 'Data Detail');
-
-  const ts = new Date().toISOString().slice(0, 10);
-  XLSX.writeFile(wb, `drying-time-data-${ts}.xlsx`);
-}
 
 // ── Column definitions ────────────────────────────────────────────────────────
 
@@ -91,7 +60,7 @@ export default function DataTable({ filteredData }) {
     if (exporting || !sorted.length) return;
     setExporting(true);
     await new Promise(r => setTimeout(r, 300));
-    exportToExcel(sorted);
+    exportDataDetailToExcel(sorted);
     setExporting(false);
   };
 

@@ -4,7 +4,8 @@ import {
   ResponsiveContainer, Cell, LabelList
 } from 'recharts';
 import { minutesToTime } from '../utils/timeUtils';
-import { BarChart2 } from 'lucide-react';
+import { BarChart2, FileDown } from 'lucide-react';
+import { exportProductCompareToExcel } from '../utils/excel/exportProductCompare';
 
 const BAR_COLORS = [
   '#f59e0b', '#f97316', '#ef4444', '#a855f7',
@@ -34,9 +35,66 @@ function CustomTooltip({ active, payload }) {
             <span className="font-medium">{d.kg} kg</span>
           </div>
         )}
+        {/* <div className="border-t border-slate-700/60 my-1" /> */}
+        <div className="flex justify-between gap-6">
+          <span className="text-slate-500">Min</span>
+          <span className="font-medium text-sky-400">{d?.minLabel}</span>
+        </div>
+        <div className="flex justify-between gap-6">
+          <span className="text-slate-500">Max</span>
+          <span className="font-medium text-rose-400">{d?.maxLabel}</span>
+        </div>
       </div>
     </div>
   );
+}
+
+/**
+ * Groups filtered source data by codeProduct and computes avg / min / max.
+ * @param {Array} data   - Raw row records
+ * @param {Object} filters - Active filter values (yearStart, yearEnd, kg)
+ * @returns {Array} - Sorted descending by avgMinutes (no slice applied)
+ */
+function groupByProduct(data, filters) {
+  let source = data;
+  if (filters.yearStart) source = source.filter(d => d.year >= parseInt(filters.yearStart));
+  if (filters.yearEnd)   source = source.filter(d => d.year <= parseInt(filters.yearEnd));
+  if (filters.kg)        source = source.filter(d => d.planningKg === parseFloat(filters.kg));
+
+  const groups = {};
+  source.forEach(d => {
+    const key = d.codeProduct || d.productName; // fallback if code missing
+    if (!groups[key]) {
+      groups[key] = {
+        codeProduct: d.codeProduct || key,
+        productName: d.productName,
+        kg:          d.planningKg,
+        minutes:     [],
+      };
+    }
+    groups[key].minutes.push(d.dryingMinutes);
+  });
+
+  return Object.values(groups)
+    .map(g => {
+      const avg = g.minutes.reduce((a, b) => a + b, 0) / g.minutes.length;
+      const min = Math.min(...g.minutes);
+      const max = Math.max(...g.minutes);
+      return {
+        label:       g.codeProduct.length > 18 ? g.codeProduct.slice(0, 16) + '…' : g.codeProduct,
+        codeProduct: g.codeProduct,
+        productName: g.productName,
+        avgMinutes:  avg,
+        avgLabel:    minutesToTime(avg),
+        minMinutes:  min,
+        minLabel:    minutesToTime(min),
+        maxMinutes:  max,
+        maxLabel:    minutesToTime(max),
+        count:       g.minutes.length,
+        kg:          g.kg,
+      };
+    })
+    .sort((a, b) => b.avgMinutes - a.avgMinutes);
 }
 
 export default function ProductCompareChart({ data, filters, yearBounds }) {
@@ -49,48 +107,13 @@ export default function ProductCompareChart({ data, filters, yearBounds }) {
   const yearLabel = isAllYears
     ? 'Semua tahun'
     : `Tahun ${effectiveYearStart} s/d ${effectiveYearEnd}`;
+
   /**
-   * Group data by Code Product (+ Kg if kg filter is active).
-   * Apply Year and Kg filters, then compute average drying time per group.
+   * exportData: full dataset (no limit) — used for Excel export.
+   * chartData:  top-15 only — used for bar chart rendering.
    */
-  const chartData = useMemo(() => {
-    let source = data;
-    if (filters.yearStart) source = source.filter(d => d.year >= parseInt(filters.yearStart));
-    if (filters.yearEnd)   source = source.filter(d => d.year <= parseInt(filters.yearEnd));
-    if (filters.kg)        source = source.filter(d => d.planningKg === parseFloat(filters.kg));
-
-    // Group by codeProduct
-    const groups = {};
-    source.forEach(d => {
-      const key = d.codeProduct || d.productName; // fallback if code missing
-      if (!groups[key]) {
-        groups[key] = {
-          codeProduct: d.codeProduct || key,
-          productName: d.productName,
-          kg:          d.planningKg,
-          minutes:     [],
-        };
-      }
-      groups[key].minutes.push(d.dryingMinutes);
-    });
-
-    return Object.values(groups)
-      .map(g => {
-        const avg = g.minutes.reduce((a, b) => a + b, 0) / g.minutes.length;
-        return {
-          // Truncate long codes for Y-axis label
-          label:       g.codeProduct.length > 18 ? g.codeProduct.slice(0, 16) + '…' : g.codeProduct,
-          codeProduct: g.codeProduct,
-          productName: g.productName,
-          avgMinutes:  avg,
-          avgLabel:    minutesToTime(avg),
-          count:       g.minutes.length,
-          kg:          g.kg,
-        };
-      })
-      .sort((a, b) => b.avgMinutes - a.avgMinutes)
-      .slice(0, 15); // cap at 15 bars for readability
-  }, [data, filters]);
+  const exportData = useMemo(() => groupByProduct(data, filters), [data, filters]);
+  const chartData  = useMemo(() => exportData.slice(0, 15), [exportData]);
 
   if (!chartData.length) {
     return (
@@ -113,9 +136,19 @@ export default function ProductCompareChart({ data, filters, yearBounds }) {
           <p className="text-xs text-slate-500 mt-1">
             {yearLabel}
             {filters.kg ? ` · ${filters.kg} kg` : ''}
-            {' · '}{chartData.length} code product
+            {' · limit '}{chartData.length}{' / '}{exportData.length} code product
           </p>
         </div>
+        <button
+          onClick={() => exportProductCompareToExcel(exportData)}
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium
+                     bg-emerald-500/10 border border-emerald-500/25 text-emerald-400 
+                     hover:bg-emerald-500/20 hover:border-emerald-500/50
+                     active:scale-95 transition-all duration-150"
+        >
+          <FileDown className="w-3.5 h-3.5" />
+          Export Excel
+        </button>
       </div>
 
       <ResponsiveContainer width="100%" height={chartHeight}>
