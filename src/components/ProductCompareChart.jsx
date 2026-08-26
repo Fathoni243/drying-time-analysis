@@ -137,7 +137,7 @@ export default function ProductCompareChart({ data, filters, yearBounds }) {
         />
         <div className="flex items-center justify-center gap-3 mt-6 text-slate-600">
           <Weight className="w-8 h-8 opacity-40" />
-          <p className="text-sm opacity-60">Chart akan tampil setelah Kg dipilih</p>
+          <p className="text-sm opacity-60">Chart akan tampil setelah filter <strong>Kg</strong> dipilih</p>
         </div>
       </div>
     );

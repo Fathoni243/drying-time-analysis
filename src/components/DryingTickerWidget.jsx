@@ -267,7 +267,7 @@ export default function DryingTickerWidget({ data, filters, yearBounds, onFilter
           />
           <div className="flex flex-col items-center justify-center flex-1 gap-3 text-slate-600 py-8">
             <Weight className="w-10 h-10 opacity-30" />
-            <p className="text-sm opacity-60 text-center">Daftar produk akan tampil setelah Kg dipilih</p>
+            <p className="text-sm opacity-60 text-center">Daftar produk akan tampil setelah filter <strong>Kg</strong> dipilih</p>
           </div>
         </div>
       </div>
