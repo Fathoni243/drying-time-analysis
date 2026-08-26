@@ -4,8 +4,9 @@ import {
   ResponsiveContainer, Cell, LabelList
 } from 'recharts';
 import { minutesToTime } from '../utils/timeUtils';
-import { BarChart2, FileDown } from 'lucide-react';
+import { BarChart2, FileDown, Weight } from 'lucide-react';
 import { exportProductCompareToExcel } from '../utils/excel/exportProductCompare';
+import AlertToast from './ui/AlertToast';
 
 const BAR_COLORS = [
   '#f59e0b', '#f97316', '#ef4444', '#a855f7',
@@ -108,12 +109,39 @@ export default function ProductCompareChart({ data, filters, yearBounds }) {
     ? 'Semua tahun'
     : `Tahun ${effectiveYearStart} s/d ${effectiveYearEnd}`;
 
+  // ── Guard: filter Kg wajib dipilih ──
+  const kgNotSelected = !filters.kg;
+
   /**
    * exportData: full dataset (no limit) — used for Excel export.
    * chartData:  top-15 only — used for bar chart rendering.
    */
   const exportData = useMemo(() => groupByProduct(data, filters), [data, filters]);
   const chartData  = useMemo(() => exportData.slice(0, 15), [exportData]);
+
+  // Jika filter Kg belum dipilih, tampilkan peringatan dan hentikan render chart
+  if (kgNotSelected) {
+    return (
+      <div className="glass-card p-6 fade-in-up">
+        <div className="flex items-center gap-2 mb-4">
+          <BarChart2 className="w-4 h-4 text-slate-500" />
+          <h2 className="text-base font-semibold text-slate-100">
+            Perbandingan Rata-rata Drying Time per Produk
+          </h2>
+        </div>
+        <AlertToast
+          show
+          type="warning"
+          title="Filter Kilogram belum dipilih"
+          message="Pilih salah satu nilai Kilogram pada filter di atas terlebih dahulu. Chart perbandingan produk memerlukan satu nilai Kg yang spesifik agar hasilnya akurat dan tidak bias akibat perbedaan kapasitas batch."
+        />
+        <div className="flex items-center justify-center gap-3 mt-6 text-slate-600">
+          <Weight className="w-8 h-8 opacity-40" />
+          <p className="text-sm opacity-60">Chart akan tampil setelah Kg dipilih</p>
+        </div>
+      </div>
+    );
+  }
 
   if (!chartData.length) {
     return (

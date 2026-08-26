@@ -5,6 +5,7 @@ import {
 } from 'recharts';
 import { minutesToTime, timeToMinutes } from '../utils/timeUtils';
 import { TrendingUp, X, Clock, Package, Calendar, Weight } from 'lucide-react';
+import AlertToast from './ui/AlertToast';
 
 // Custom dot for anomaly highlighting
 function CustomDot(props) {
@@ -246,6 +247,31 @@ export default function DryingTrendChart({ filteredData, filters, yearBounds }) 
 
   // Tampilkan badge anomali hanya saat filter spesifik aktif
   const isSpecificFilter = !!(filters.codeProduct || filters.productName);
+
+  // ── Guard: filter Kg wajib dipilih ──
+  const kgNotSelected = !filters.kg;
+  if (kgNotSelected) {
+    return (
+      <div className="glass-card p-6 mb-6 fade-in-up">
+        <div className="flex items-center gap-2 mb-4">
+          <TrendingUp className="w-4 h-4 text-slate-500" />
+          <h2 className="text-base font-semibold text-slate-100">
+            Trend Sub Total Drying Time
+          </h2>
+        </div>
+        <AlertToast
+          show
+          type="warning"
+          title="Filter Kilogram belum dipilih"
+          message="Pilih salah satu nilai Kilogram pada filter di atas terlebih dahulu agar trend chart dapat ditampilkan dengan akurat."
+        />
+        <div className="flex items-center justify-center gap-3 mt-6 text-slate-600">
+          <Weight className="w-8 h-8 opacity-40" />
+          <p className="text-sm opacity-60">Chart akan tampil setelah Kg dipilih</p>
+        </div>
+      </div>
+    );
+  }
 
   if (!filteredData.length) {
     return (

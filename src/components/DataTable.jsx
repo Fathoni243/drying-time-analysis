@@ -17,7 +17,7 @@ function SortIcon({ column, sortKey, sortDir }) {
 }
 
 
-// ── Column definitions ────────────────────────────────────────────────────────
+// ── Column definitions ────────────────────────A2606170389────────────────────────────────
 
 const COLUMNS = [
   { key: 'date',                label: 'Tanggal',      numeric: false },

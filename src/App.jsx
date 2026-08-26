@@ -8,8 +8,8 @@ import DryingTrendChart from './components/DryingTrendChart';
 import ProductCompareChart from './components/ProductCompareChart';
 import DryingTickerWidget from './components/DryingTickerWidget';
 import DataTable from './components/DataTable';
-import LoadingSpinner from './components/LoadingSpinner';
-import FilterTransitionOverlay from './components/FilterTransitionOverlay';
+import LoadingSpinner from './components/ui/LoadingSpinner';
+import FilterTransitionOverlay from './components/ui/FilterTransitionOverlay';
 import { formatedDate } from './utils/dateFormat';
 
 export default function App() {

@@ -4,8 +4,9 @@ import { minutesToTime } from '../utils/timeUtils';
 import {
   TrendingUp, TrendingDown, Minus,
   Search, X, ArrowUpDown, ThumbsUp, ThumbsDown,
-  Filter, MousePointerClick,
+  Filter, MousePointerClick, Weight,
 } from 'lucide-react';
+import AlertToast from './ui/AlertToast';
 
 // ── Trend calculation ────────────────────────────────────────────────────────
 
@@ -243,6 +244,35 @@ export default function DryingTickerWidget({ data, filters, yearBounds, onFilter
     fast:     'diurutkan terbaik (makin cepat)',
     slow:     'diurutkan terburuk (makin lama)',
   }[sortMode];
+
+  // ── Guard: filter Kg wajib dipilih ──
+  const kgNotSelected = !filters.kg;
+  if (kgNotSelected) {
+    return (
+      <div className="glass-card overflow-hidden fade-in-up flex flex-col h-full">
+        {/* Header tetap ditampilkan */}
+        <div className="flex items-center justify-between px-4 py-3.5 border-b border-white/[0.05]">
+          <div className="flex items-center gap-2">
+            <TrendingUp className="w-4 h-4 text-amber-400" />
+            <span className="text-sm font-semibold text-slate-200">Tren per Produk</span>
+          </div>
+        </div>
+        {/* Alert warning */}
+        <div className="p-4 flex-1 flex flex-col gap-4">
+          <AlertToast
+            show
+            type="warning"
+            title="Filter Kilogram belum dipilih"
+            message="Pilih salah satu nilai Kilogram pada filter di atas terlebih dahulu agar daftar tren produk dapat ditampilkan."
+          />
+          <div className="flex flex-col items-center justify-center flex-1 gap-3 text-slate-600 py-8">
+            <Weight className="w-10 h-10 opacity-30" />
+            <p className="text-sm opacity-60 text-center">Daftar produk akan tampil setelah Kg dipilih</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="glass-card overflow-hidden fade-in-up flex flex-col h-full">
