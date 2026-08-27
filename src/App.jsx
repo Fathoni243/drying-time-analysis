@@ -52,7 +52,27 @@ export default function App() {
     return d;
   }, [data, filters]);
 
-  const latestData = data.at(-1);
+  // ── Latest data per line ─────────────────────────────────────────────────
+  // Parse DD/MM/YYYY string into a comparable Date value
+  const parseDate = (dateStr) => {
+    if (!dateStr) return 0;
+    const [d, m, y] = dateStr.split('/');
+    return new Date(+y, +m - 1, +d).getTime();
+  };
+
+  // Untuk masing-masing line, ambil baris data dengan tanggal terbaru
+  const latestDataByLine = useMemo(() => {
+    const lines = ['GV 1', 'GV 2', 'GV 3'];
+    const result = {};
+    lines.forEach(line => {
+      const rows = data.filter(r => r.line === line);
+      if (!rows.length) { result[line] = null; return; }
+      result[line] = rows.reduce((latest, r) =>
+        parseDate(r.date) > parseDate(latest.date) ? r : latest
+      );
+    });
+    return result;
+  }, [data]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Year bounds dari seluruh dataset (untuk label "Semua Tahun" vs range) ──
   const yearBounds = useMemo(() => {
@@ -62,7 +82,7 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-mesh">
-      <Header lastFetched={lastFetched} onRefresh={refetch} loading={loading} latestData={latestData} />
+      <Header lastFetched={lastFetched} onRefresh={refetch} loading={loading} latestDataByLine={latestDataByLine} activeLine={filters.line} />
 
       {/* Filter transition overlay — blocks interaction during heavy re-render */}
       <FilterTransitionOverlay show={isPending} />
@@ -120,8 +140,8 @@ export default function App() {
             {/* Footer */}
             <footer className="text-center py-4 text-xs text-slate-600 border-t border-white/[0.04]">
               Drying Time Analysis Dashboard · Data diambil dari Google Sheets
-              {latestData?.date && (
-                <span> · Terakhir diperbarui <span className="text-amber-400 font-medium">{formatedDate(latestData.date)}</span></span>
+              {latestDataByLine[filters.line]?.date && (
+                <span> · Terakhir diperbarui <span className="text-amber-400 font-medium">{formatedDate(latestDataByLine[filters.line].date)}</span></span>
               )}
             </footer>
           </>

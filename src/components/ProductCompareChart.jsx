@@ -4,7 +4,7 @@ import {
   ResponsiveContainer, Cell, LabelList
 } from 'recharts';
 import { minutesToTime } from '../utils/timeUtils';
-import { BarChart2, FileDown, Weight } from 'lucide-react';
+import { BarChart2, FileDown, Weight, GitBranch } from 'lucide-react';
 import { exportProductCompareToExcel } from '../utils/excel/exportProductCompare';
 import AlertToast from './ui/AlertToast';
 
@@ -36,6 +36,12 @@ function CustomTooltip({ active, payload }) {
             <span className="font-medium">{d.kg} kg</span>
           </div>
         )}
+        {d?.line && (
+          <div className="flex justify-between gap-6">
+            <span className="text-slate-500">Line</span>
+            <span className="font-medium text-violet-300">{d.line}</span>
+          </div>
+        )}
         {/* <div className="border-t border-slate-700/60 my-1" /> */}
         <div className="flex justify-between gap-6">
           <span className="text-slate-500">Min</span>
@@ -61,6 +67,7 @@ function groupByProduct(data, filters) {
   if (filters.yearStart) source = source.filter(d => d.year >= parseInt(filters.yearStart));
   if (filters.yearEnd)   source = source.filter(d => d.year <= parseInt(filters.yearEnd));
   if (filters.kg)        source = source.filter(d => d.planningKg === parseFloat(filters.kg));
+  if (filters.line)      source = source.filter(d => d.line === filters.line);
 
   const groups = {};
   source.forEach(d => {
@@ -70,6 +77,7 @@ function groupByProduct(data, filters) {
         codeProduct: d.codeProduct || key,
         productName: d.productName,
         kg:          d.planningKg,
+        line:        d.line || '',
         minutes:     [],
       };
     }
@@ -93,6 +101,7 @@ function groupByProduct(data, filters) {
         maxLabel:    minutesToTime(max),
         count:       g.minutes.length,
         kg:          g.kg,
+        line:        g.line,
       };
     })
     .sort((a, b) => b.avgMinutes - a.avgMinutes);
@@ -163,7 +172,13 @@ export default function ProductCompareChart({ data, filters, yearBounds }) {
           </h2>
           <p className="text-xs text-slate-500 mt-1">
             {yearLabel}
-            {filters.kg ? ` · ${filters.kg} kg` : ''}
+            {filters.kg ? ` · ${filters.kg} kg · ` : ''}
+            {filters.line && (
+              <span className="inline-flex items-center gap-1 ml-1">
+                <GitBranch className="inline w-3 h-3 text-violet-400" />
+                <span className="text-violet-400">{filters.line}</span>
+              </span>
+            )}
             {' · limit '}{chartData.length}{' / '}{exportData.length} code product
           </p>
         </div>

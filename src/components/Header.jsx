@@ -1,7 +1,7 @@
-import { BarChart2, Droplets, RefreshCw } from 'lucide-react';
+import { BarChart2, Droplets, RefreshCw, GitBranch } from 'lucide-react';
 import { formatedDate } from '../utils/dateFormat';
 
-export default function Header({ lastFetched, onRefresh, loading, latestData }) {
+export default function Header({ lastFetched, onRefresh, loading, latestDataByLine, activeLine }) {
   return (
     <header className="relative overflow-hidden border-b border-amber-500/10 bg-[#0d1528]/80 backdrop-blur-xl">
       {/* Ambient glow */}
@@ -36,19 +36,24 @@ export default function Header({ lastFetched, onRefresh, loading, latestData }) 
         </div>
 
         {/* Right: last updated + refresh */}
-        <div className="flex items-center gap-3 shrink-0">
+        <div className="flex items-center gap-1.5 shrink-0">
           <div className="hidden sm:flex flex-col items-end text-right whitespace-nowrap">
-            {lastFetched && (
+            {/* {lastFetched && (
               <span className="text-[11px] text-slate-400 leading-tight">
                 Last Refresh: <span className="text-slate-300 font-mono">{lastFetched.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}</span>
               </span>
-            )}
+            )} */}
 
-            {latestData?.date && (
-              <span className="text-xs text-slate-400 leading-tight mt-0.5">
-                Latest Data: <span className="text-amber-400">{formatedDate(latestData.date)}</span>
-              </span>
-            )}
+            {activeLine && latestDataByLine?.[activeLine] && (() => {
+              const row = latestDataByLine[activeLine];
+              return (
+                <span className={`flex items-center gap-1.5 text-[11px] leading-tight px-2 py-0.5 rounded-full text-slate-400`}>
+                  <GitBranch className={`w-2.5 h-2.5 shrink-0 text-slate-400`} />
+                  <span>Latest data {activeLine}:</span>
+                  <span>{formatedDate(row.date)}</span>
+                </span>
+              );
+            })()}
           </div>
 
           <button
