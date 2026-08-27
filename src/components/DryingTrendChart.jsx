@@ -4,7 +4,7 @@ import {
   ReferenceLine, ResponsiveContainer, Dot, Area, AreaChart
 } from 'recharts';
 import { minutesToTime, timeToMinutes } from '../utils/timeUtils';
-import { TrendingUp, X, Clock, Package, Calendar, Weight } from 'lucide-react';
+import { TrendingUp, X, Clock, Package, Calendar, Weight, GitBranch } from 'lucide-react';
 import AlertToast from './ui/AlertToast';
 
 // Custom dot for anomaly highlighting
@@ -58,6 +58,12 @@ function CustomTooltip({ active, payload }) {
           <span className="text-slate-500">Planning</span>
           <span className="font-medium">{d?.planningKg} kg</span>
         </div>
+        {d?.line && (
+          <div className="flex justify-between gap-6">
+            <span className="text-slate-500">Line</span>
+            <span className="font-medium text-violet-300">{d.line}</span>
+          </div>
+        )}
         <div className="border-t border-amber-500/15 pt-1 mt-1 flex justify-between gap-6">
           <span className="text-slate-400">Drying Time</span>
           <span className="font-bold text-amber-300 text-sm">{d?.subTotalDryingFinal}</span>
@@ -151,6 +157,17 @@ function BatchPopup({ data, onClose }) {
                 </div>
               </div>
             </div>
+
+            {/* Line */}
+            {data.line && (
+              <div className="flex items-center gap-3 bg-white/[0.03] rounded-xl px-3.5 py-2.5 border border-white/[0.05]">
+                <GitBranch size={15} className="text-violet-400 shrink-0" />
+                <div>
+                  <p className="text-[10px] text-slate-500 mb-0.5">Line</p>
+                  <p className="text-[13px] font-semibold text-violet-300">{data.line}</p>
+                </div>
+              </div>
+            )}
 
             {/* Drying Time highlighted — gradient bg pakai inline style */}
             <div

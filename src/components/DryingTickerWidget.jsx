@@ -180,22 +180,24 @@ export default function DryingTickerWidget({ data, filters, yearBounds, onFilter
   };
 
   const tickers = useMemo(() => {
-    // Apply year range + kg filters from FilterBar
+    // Apply year range + kg + line filters from FilterBar
     // (codeProduct filter intentionally NOT applied so ticker shows full landscape)
     let source = data;
     if (filters.yearStart) source = source.filter(d => d.year >= parseInt(filters.yearStart));
     if (filters.yearEnd)   source = source.filter(d => d.year <= parseInt(filters.yearEnd));
     if (filters.kg)        source = source.filter(d => d.planningKg === parseFloat(filters.kg));
+    if (filters.line)      source = source.filter(d => d.line === filters.line);
 
-    // Group by codeProduct
+    // Group by codeProduct + line (same product may run on different lines)
     const groups = {};
     source.forEach(d => {
-      const key = d.codeProduct || d.productName;
+      const key = `${d.codeProduct || d.productName}__${d.line || ''}`;
       if (!groups[key]) {
         groups[key] = {
-          codeProduct: d.codeProduct || key,
+          codeProduct: d.codeProduct || (d.productName),
           productName: d.productName,
           planningKg:  d.planningKg,
+          line:        d.line || '',
           items:       [],
         };
       }
@@ -206,19 +208,21 @@ export default function DryingTickerWidget({ data, filters, yearBounds, onFilter
       const minuteArr = g.items.map(d => d.dryingMinutes);
       const pct       = calcTrendPct(minuteArr, 5);
       const latest    = minuteArr[minuteArr.length - 1];
+      const linePart  = g.line ? ` · ${g.line}` : '';
 
       return {
         codeProduct: g.codeProduct,
         productName: g.productName,
         planningKg:  g.planningKg,
-        sub:         `${g.productName} · ${g.planningKg} kg · ${g.items.length} batch`,
+        line:        g.line,
+        sub:         `${g.productName} · ${g.planningKg} kg${linePart} · ${g.items.length} batch`,
         minuteArr:   downsample(minuteArr, 30),
         latestTime:  minutesToTime(latest),
         pct,
         absChange:   Math.abs(pct),
       };
     });
-  }, [data, filters.yearStart, filters.yearEnd, filters.kg]);
+  }, [data, filters.yearStart, filters.yearEnd, filters.kg, filters.line]);
 
   // Search filter
   const searched = useMemo(() => {

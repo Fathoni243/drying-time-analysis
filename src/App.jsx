@@ -21,6 +21,7 @@ export default function App() {
     yearEnd:     '',  // tahun selesai (default: tahun paling akhir dari data)
     codeProduct: '',  // replaces old "product" (name-based) filter
     kg:          '',
+    line:        'GV 1', // default: GV 1
   });
 
   const [isPending, startTransition] = useTransition();
@@ -38,7 +39,7 @@ export default function App() {
     });
   };
 
-  const handleReset = () => startTransition(() => setFilters({ yearStart: '', yearEnd: '', codeProduct: '', kg: '' }));
+  const handleReset = () => startTransition(() => setFilters({ yearStart: '', yearEnd: '', codeProduct: '', kg: '', line: 'GV 1' }));
 
   // ── Derived filtered data (used by Trend Chart, Stats Cards, Data Table) ──
   const filteredData = useMemo(() => {
@@ -47,6 +48,7 @@ export default function App() {
     if (filters.yearEnd)     d = d.filter(r => r.year <= parseInt(filters.yearEnd));
     if (filters.codeProduct) d = d.filter(r => r.codeProduct === filters.codeProduct);
     if (filters.kg)          d = d.filter(r => r.planningKg === parseFloat(filters.kg));
+    if (filters.line)        d = d.filter(r => r.line === filters.line);
     return d;
   }, [data, filters]);
 

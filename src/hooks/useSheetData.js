@@ -49,6 +49,7 @@ function cell(row, idx) {
  * @property {number}      dryingMinutes       - Converted minutes from subTotalDryingFinal
  * @property {number|null} year                - e.g. 2021
  * @property {string}      variantName         - e.g. "Brown Sugar EF100 (400 kg)"
+ * @property {string}      line                - e.g. "GV 1" | "GV 2" | "GV 3"
  */
 
 // ── Hook ────────────────────────────────────────────────────────────────────
@@ -72,8 +73,8 @@ export function useSheetData() {
     setError(null);
 
     try {
-      // Fetch up to column L — covers both "Sub Total Drying" and "Sub Total Drying Final"
-      const range = encodeURIComponent(`${SHEET_NAME}!A:L`);
+      // Fetch up to column M
+      const range = encodeURIComponent(`${SHEET_NAME}!A:M`);
       const url   = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/${range}?key=${API_KEY}`;
 
       const response = await fetch(url);
@@ -104,6 +105,7 @@ export function useSheetData() {
         // Source column dipilih oleh konstanta DRYING_COLUMN_SOURCE di atas file ini.
         // Gunakan array jika ingin fallback: misalnya ['sub total drying final', 'sub total drying']
         subTotalDryingFinal: findCol(headers, [DRYING_COLUMN_SOURCE]),
+        line:                findCol(headers, ['line']),
       };
 
       // ── Parse data rows ────────────────────────────────────────────────────
@@ -122,6 +124,8 @@ export function useSheetData() {
         // Prefer "Variant Name" column; fall back to "Product (Kg)"
         const variantName = cell(row, idx.variantName) || `${productName} (${planningKg} kg)`;
 
+        const line = cell(row, idx.line);
+
         return {
           date:                cell(row, idx.date),
           batchNo:             cell(row, idx.batchNo),
@@ -132,6 +136,7 @@ export function useSheetData() {
           dryingMinutes,
           year,
           variantName,
+          line,
         };
       })
       // Drop rows without a batch number or a valid drying time

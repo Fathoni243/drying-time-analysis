@@ -11,7 +11,8 @@ const COLUMNS = [
   { header: 'Code Product',          key: 'Code Product',          wch: 14 },
   { header: 'Product Name',          key: 'Product Name',          wch: 36 },
   { header: 'Planning (Kg)',         key: 'Planning (Kg)',         wch: 14 },
-  { header: 'Sub Total Drying',key: 'Sub Total Drying',            wch: 20 },
+  { header: 'Line',                  key: 'Line',                  wch: 10 },
+  { header: 'Sub Total Drying',      key: 'Sub Total Drying',      wch: 20 },
   { header: 'Tahun',                 key: 'Tahun',                 wch: 8  },
 ];
 
@@ -28,6 +29,7 @@ function buildRows(data) {
     'Code Product':           row.codeProduct,
     'Product Name':           row.productName,
     'Planning (Kg)':          row.planningKg,
+    'Line':                   row.line ?? '',
     'Sub Total Drying':       row.subTotalDryingFinal,
     'Tahun':                  row.year ?? '',
   }));

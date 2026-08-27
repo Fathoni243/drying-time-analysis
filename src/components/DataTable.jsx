@@ -25,6 +25,7 @@ const COLUMNS = [
   { key: 'codeProduct',         label: 'Code Product', numeric: false },
   { key: 'productName',         label: 'Produk',       numeric: false },
   { key: 'planningKg',          label: 'Planning (Kg)',numeric: true  },
+  { key: 'line',                label: 'Line',         numeric: false },
   { key: 'dryingMinutes',       label: 'Drying Time',  numeric: true  },
   { key: 'year',                label: 'Tahun',        numeric: false },
 ];
@@ -190,6 +191,15 @@ export default function DataTable({ filteredData }) {
                     <span className="px-2 py-0.5 rounded-full bg-slate-700/60 text-slate-300 text-xs">
                       {row.planningKg} kg
                     </span>
+                  </td>
+                  <td className={td + " text-center"}>
+                    {row.line ? (
+                      <span className="px-2 py-0.5 rounded-full bg-violet-500/15 text-violet-300 text-xs border border-violet-500/25">
+                        {row.line}
+                      </span>
+                    ) : (
+                      <span className="text-slate-600">—</span>
+                    )}
                   </td>
                   <td className={td}>
                     <span className="font-semibold text-amber-400">{row.subTotalDryingFinal}</span>

@@ -1,5 +1,5 @@
 import { useMemo, useState, useRef, useEffect } from 'react';
-import { SlidersHorizontal, X, Calendar, Tag, Weight, Search } from 'lucide-react';
+import { SlidersHorizontal, X, Calendar, Tag, Weight, Search, GitBranch } from 'lucide-react';
 
 export default function FilterBar({ data, filters, onFilterChange, onReset }) {
   const [codeSearch, setCodeSearch] = useState(filters.codeProduct || '');
@@ -72,17 +72,18 @@ export default function FilterBar({ data, filters, onFilterChange, onReset }) {
     );
   }, [data, activeYearStart, activeYearEnd, codeSearch]);
 
-  /** Planning (Kg) options, filtered by year range + selected code product */
+  /** Planning (Kg) options, filtered by year range + selected code product + line */
   const kgOptions = useMemo(() => {
     let source = data;
     if (activeYearStart)     source = source.filter(d => d.year >= parseInt(activeYearStart));
     if (activeYearEnd)       source = source.filter(d => d.year <= parseInt(activeYearEnd));
     if (filters.codeProduct) source = source.filter(d => d.codeProduct === filters.codeProduct);
+    if (filters.line)        source = source.filter(d => d.line === filters.line);
     const set = new Set(source.map(d => d.planningKg).filter(v => v > 0));
     return Array.from(set).sort((a, b) => a - b);
-  }, [data, activeYearStart, activeYearEnd, filters.codeProduct]);
+  }, [data, activeYearStart, activeYearEnd, filters.codeProduct, filters.line]);
 
-  const hasActiveFilter = filters.yearStart || filters.yearEnd || filters.codeProduct || filters.kg;
+  const hasActiveFilter = filters.yearStart || filters.yearEnd || filters.codeProduct || filters.kg || (filters.line && filters.line !== 'GV 1');
 
   // ── Event handlers ───────────────────────────────────────────────────────
 
@@ -138,7 +139,7 @@ export default function FilterBar({ data, filters, onFilterChange, onReset }) {
         )}
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
 
         {/* ── Year Range ── */}
         <div className="space-y-1.5">
@@ -272,6 +273,24 @@ export default function FilterBar({ data, filters, onFilterChange, onReset }) {
               </div>
             )}
           </div>
+        </div>
+
+        {/* ── Line ── */}
+        <div className="space-y-1.5">
+          <label className="flex items-center gap-1.5 text-xs text-slate-400 font-medium">
+            <GitBranch className="w-3.5 h-3.5 text-amber-500/70" />
+            Line
+          </label>
+          <select
+            id="filter-line"
+            className={selectClass}
+            value={filters.line || 'GV 1'}
+            onChange={e => onFilterChange('line', e.target.value)}
+          >
+            <option value="GV 1">GV 1</option>
+            <option value="GV 2">GV 2</option>
+            <option value="GV 3">GV 3</option>
+          </select>
         </div>
 
         {/* ── Planning (Kg) ── */}
