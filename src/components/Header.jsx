@@ -24,7 +24,7 @@ export default function Header({ lastFetched, onRefresh, loading, latestDataByLi
         </div>
 
         {/* Center decorative pills - ditampilkan di layar besar (lg+) agar tidak bertabrakan di iPad */}
-        <div className="hidden lg:flex items-center gap-2">
+        {/* <div className="hidden lg:flex items-center gap-2">
           <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/20">
             <div className="w-1.5 h-1.5 rounded-full bg-amber-400 pulse-amber" />
             <span className="text-xs text-amber-400 font-medium">Live Data</span>
@@ -33,7 +33,7 @@ export default function Header({ lastFetched, onRefresh, loading, latestDataByLi
             <BarChart2 className="w-3 h-3 text-slate-400" />
             <span className="text-xs text-slate-400 font-medium">Google Sheets</span>
           </div>
-        </div>
+        </div> */}
 
         {/* Right: last updated + refresh */}
         <div className="flex items-center gap-1.5 shrink-0">

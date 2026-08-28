@@ -183,7 +183,13 @@ export default function ProductCompareChart({ data, filters, yearBounds }) {
           </p>
         </div>
         <button
-          onClick={() => exportProductCompareToExcel(exportData)}
+          onClick={() => exportProductCompareToExcel(exportData, {
+            yearStart:     filters.yearStart || '',
+            yearEnd:       filters.yearEnd   || '',
+            yearBoundsMin: yearBounds?.min   || '',
+            yearBoundsMax: yearBounds?.max   || '',
+            line:          filters.line      || '',
+          })}
           className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium
                      bg-emerald-500/10 border border-emerald-500/25 text-emerald-400 
                      hover:bg-emerald-500/20 hover:border-emerald-500/50
