@@ -3,10 +3,10 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer, Cell, LabelList
 } from 'recharts';
-import { minutesToTime } from '../utils/timeUtils';
+import { minutesToTime } from '../../utils/timeUtils';
 import { BarChart2, FileDown, Weight, GitBranch } from 'lucide-react';
-import { exportProductCompareToExcel } from '../utils/excel/exportProductCompare';
-import AlertToast from './ui/AlertToast';
+import { exportProductCompareToExcel } from '../../utils/excel/exportProductCompare';
+import AlertToast from '../shared/ui/AlertToast';
 
 const BAR_COLORS = [
   '#f59e0b', '#f97316', '#ef4444', '#a855f7',

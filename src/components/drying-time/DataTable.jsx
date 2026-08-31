@@ -3,7 +3,7 @@ import {
   ChevronUp, ChevronDown, ChevronsUpDown,
   ChevronLeft, ChevronRight, TableProperties, FileDown
 } from 'lucide-react';
-import { exportDataDetailToExcel } from '../utils/excel/exportDataDetail';
+import { exportDataDetailToExcel } from '../../utils/excel/exportDataDetail';
 
 const PAGE_SIZE = 15;
 

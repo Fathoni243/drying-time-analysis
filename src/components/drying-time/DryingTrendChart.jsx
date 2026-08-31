@@ -3,9 +3,9 @@ import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip,
   ReferenceLine, ResponsiveContainer, Dot, Area, AreaChart
 } from 'recharts';
-import { minutesToTime, timeToMinutes } from '../utils/timeUtils';
+import { minutesToTime, timeToMinutes } from '../../utils/timeUtils';
 import { TrendingUp, X, Clock, Package, Calendar, Weight, GitBranch } from 'lucide-react';
-import AlertToast from './ui/AlertToast';
+import AlertToast from '../shared/ui/AlertToast';
 
 // Custom dot for anomaly highlighting
 function CustomDot(props) {

@@ -1,27 +1,36 @@
 import { BarChart2, Droplets, RefreshCw, GitBranch } from 'lucide-react';
-import { formatedDate } from '../utils/dateFormat';
+import { formatedDate } from '../../utils/dateFormat';
+import { useSidebar } from '../../contexts/SidebarContext';
 
 export default function Header({ lastFetched, onRefresh, loading, latestDataByLine, activeLine }) {
+  const { toggle } = useSidebar();
   return (
     <header className="relative overflow-hidden border-b border-amber-500/10 bg-[#0d1528]/80 backdrop-blur-xl">
       {/* Ambient glow */}
       <div className="pointer-events-none absolute -top-20 left-1/2 -translate-x-1/2 w-[600px] h-[200px] bg-amber-500/5 rounded-full blur-3xl" />
 
       <div className="relative max-w-[1600px] mx-auto px-6 py-5 flex items-center justify-between gap-4">
-        {/* Brand */}
-        <div className="flex items-center gap-3">
-          <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500/20 to-orange-500/20 border border-amber-500/30 shadow-lg shadow-amber-500/10">
+        {/* Brand — klik untuk buka sidebar */}
+        <button
+          type="button"
+          onClick={toggle}
+          title="Klik untuk buka menu navigasi"
+          aria-label="Buka menu navigasi"
+          className="flex items-center gap-3 cursor-pointer group"
+        >
+          <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500/20 to-orange-500/20 border border-amber-500/30 shadow-lg shadow-amber-500/10
+                          group-hover:border-amber-500/60 group-hover:shadow-amber-500/20 transition-all duration-200">
             <Droplets className="w-5 h-5 text-amber-400" />
           </div>
-          <div>
-            <h1 className="text-lg font-bold gradient-text leading-tight">
+          <div className="text-left">
+            <h1 className="text-lg font-bold gradient-text leading-tight group-hover:opacity-80 transition-opacity duration-200">
               Drying Time Analysis
             </h1>
             <p className="text-xs text-slate-500 font-medium tracking-wide mt-0.5">
               Dashboard Monitoring Produksi
             </p>
           </div>
-        </div>
+        </button>
 
         {/* Center decorative pills - ditampilkan di layar besar (lg+) agar tidak bertabrakan di iPad */}
         {/* <div className="hidden lg:flex items-center gap-2">

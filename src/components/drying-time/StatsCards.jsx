@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { Clock, TrendingDown, TrendingUp, Activity, Database } from 'lucide-react';
-import { minutesToTime } from '../utils/timeUtils';
+import { minutesToTime } from '../../utils/timeUtils';
 
 function StatCard({ id, icon: Icon, label, value, sub, sub2, color, delay = 0 }) {
   return (
