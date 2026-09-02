@@ -6,13 +6,13 @@ import { useSidebar } from '../../contexts/SidebarContext';
 // ── Sub-items: Production Delivery ───────────────────────────────────────────
 
 const DELIVERY_CHILDREN = [
-  { label: 'Biscuit',     id: 'biscuit'     },
-  { label: 'Givaudan',    id: 'givaudan'    },
-  { label: 'Liquid',      id: 'liquid'      },
-  { label: 'Powder',      id: 'powder'      },
-  { label: 'Santan',      id: 'santan'      },
-  { label: 'Makloon MR',  id: 'makloon-mr'  },
-  { label: 'PEA Protein', id: 'pea-protein' },
+  { label: 'Biscuit',     id: 'biscuit',     to: '/production-delivery-dashboard/biscuit',     ready: true  },
+  { label: 'Givaudan',    id: 'givaudan',    to: '/production-delivery-dashboard/givaudan',    ready: false },
+  { label: 'Liquid',      id: 'liquid',      to: '/production-delivery-dashboard/liquid',      ready: false },
+  { label: 'Powder',      id: 'powder',      to: '/production-delivery-dashboard/powder',      ready: false },
+  { label: 'Santan',      id: 'santan',      to: '/production-delivery-dashboard/santan',      ready: false },
+  { label: 'Makloon MR',  id: 'makloon-mr',  to: '/production-delivery-dashboard/makloon-mr',  ready: false },
+  { label: 'PEA Protein', id: 'pea-protein', to: '/production-delivery-dashboard/pea-protein', ready: false },
 ];
 
 // ── Main Component ────────────────────────────────────────────────────────────
@@ -73,7 +73,7 @@ export default function Sidebar() {
               <Cog size={20} className="text-amber-400" />
             </div>
             <div>
-              <p className="text-sm font-bold text-slate-100 leading-tight">PPIC Dashboard</p>
+              <p className="text-sm font-bold gradient-text leading-tight">PPIC Dashboard</p>
               <p className="text-[10px] text-slate-500 mt-0.5">Satoria Group</p>
             </div>
           </div>
@@ -131,15 +131,32 @@ export default function Sidebar() {
               className={`overflow-hidden transition-all duration-300 ease-in-out ${deliveryOpen ? 'max-h-80 opacity-100' : 'max-h-0 opacity-0'}`}
             >
               <div className="pl-11 py-1 space-y-0.5">
-                {DELIVERY_CHILDREN.map(({ label, id }) => (
-                  <Link
-                    key={id}
-                    to="/production-delivery-dashboard"
-                    className="block px-3 py-2 rounded-lg text-sm text-slate-500 hover:text-slate-200 hover:bg-slate-800/60 transition-colors duration-150"
-                  >
-                    {label}
-                  </Link>
-                ))}
+                {DELIVERY_CHILDREN.map(({ label, id, to, ready }) => {
+                  const isActive = location.pathname === to;
+                  return (
+                    <Link
+                      key={id}
+                      to={to}
+                      aria-current={isActive ? 'page' : undefined}
+                      className={`
+                        flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors duration-150
+                        ${isActive
+                          ? 'bg-teal-500/15 text-teal-300 font-medium'
+                          : ready
+                            ? 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
+                            : 'text-slate-600 hover:text-slate-500 hover:bg-slate-800/40 cursor-default pointer-events-none'}
+                      `}
+                      onClick={!ready ? (e) => e.preventDefault() : undefined}
+                    >
+                      <span>{label}</span>
+                      {!ready && (
+                        <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-slate-700/60 text-slate-600 font-medium shrink-0 ml-1">
+                          soon
+                        </span>
+                      )}
+                    </Link>
+                  );
+                })}
               </div>
             </div>
           </div>

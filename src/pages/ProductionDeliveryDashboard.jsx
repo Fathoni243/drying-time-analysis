@@ -1,6 +1,8 @@
+import { useEffect } from 'react';
 import { Truck, Package, BarChart3, Clock, Construction } from 'lucide-react';
 import Sidebar from '../components/shared/Sidebar';
 import { useSidebar } from '../contexts/SidebarContext';
+import { useProductionDeliveryData } from '../hooks/useProductionDeliveryData';
 
 // ── Placeholder stat cards ───────────────────────────────────────────────────
 
@@ -61,6 +63,38 @@ function StatCard({ id, icon: Icon, label, value, sub, color }) {
 
 export default function ProductionDeliveryDashboard() {
   const { toggle } = useSidebar();
+  const { productionData, deliveryData, loading, error } = useProductionDeliveryData();
+
+  useEffect(() => {
+    if (loading) {
+      console.log('%c[ProductionDeliveryDashboard] Sedang memuat data dari Google Sheets...', 'color: #94a3b8;');
+    }
+  }, [loading]);
+
+  useEffect(() => {
+    if (error) {
+      console.error('[ProductionDeliveryDashboard] Error memuat data:', error);
+    }
+  }, [error]);
+
+  useEffect(() => {
+    if (productionData.length > 0) {
+      console.log('%c=== PRODUCTION DATA CHECK ===', 'color: #38bdf8; font-weight: bold; font-size: 13px;');
+      console.log(`Total baris Production: ${productionData.length}`);
+      console.log('Production [Baris Pertama / Index 0]:', productionData[0]);
+      console.log(`Production [Baris Terakhir / Index ${productionData.length - 1}]:`, productionData[productionData.length - 1]);
+    }
+  }, [productionData]);
+
+  useEffect(() => {
+    if (deliveryData.length > 0) {
+      console.log('%c=== DELIVERY DATA CHECK ===', 'color: #34d399; font-weight: bold; font-size: 13px;');
+      console.log(`Total baris Delivery: ${deliveryData.length}`);
+      console.log('Delivery [Baris Pertama / Index 0]:', deliveryData[0]);
+      console.log(`Delivery [Baris Terakhir / Index ${deliveryData.length - 1}]:`, deliveryData[deliveryData.length - 1]);
+    }
+  }, [deliveryData]);
+
   return (
     <div className="min-h-screen bg-mesh">
       {/* Global sidebar navigation */}

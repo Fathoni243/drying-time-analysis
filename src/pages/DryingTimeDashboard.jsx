@@ -1,6 +1,6 @@
 import { useState, useMemo, useTransition } from 'react';
 import { AlertTriangle } from 'lucide-react';
-import { useSheetData } from '../hooks/useSheetData';
+import { useGivaudanSheetData } from '../hooks/useGivaudanSheetData';
 import Header from '../components/drying-time/Header';
 import FilterBar from '../components/drying-time/FilterBar';
 import StatsCards from '../components/drying-time/StatsCards';
@@ -14,7 +14,7 @@ import Sidebar from '../components/shared/Sidebar';
 import { formatedDate } from '../utils/dateFormat';
 
 export default function DryingTimeDashboard() {
-  const { data, loading, error, refetch, lastFetched } = useSheetData();
+  const { data, loading, error, refetch, lastFetched } = useGivaudanSheetData();
 
   // ── Filter state ──────────────────────────────────────────────────────────
   const [filters, setFilters] = useState({

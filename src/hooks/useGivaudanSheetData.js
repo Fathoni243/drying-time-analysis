@@ -1,9 +1,9 @@
 import { useState, useEffect, useCallback } from 'react';
 import { timeToMinutes } from '../utils/timeUtils';
 
-const SPREADSHEET_ID = import.meta.env.VITE_SPREADSHEET_ID;
 const API_KEY        = import.meta.env.VITE_GOOGLE_API_KEY;
-const SHEET_NAME     = import.meta.env.VITE_SHEET_NAME || 'Sheet1';
+const SPREADSHEET_ID = import.meta.env.VITE_GIVAUDAN_SPREADSHEET_ID;
+const SHEET_NAME     = import.meta.env.VITE_GIVAUDAN_SHEET_NAME || 'Sheet1';
 
 // ── Source column toggle ────────────────────────────────────────────────────
 //
@@ -62,7 +62,7 @@ function cell(row, idx) {
  *
  * @returns {{ data: DryingRow[], loading: boolean, error: string|null, refetch: Function, lastFetched: Date|null }}
  */
-export function useSheetData() {
+export function useGivaudanSheetData() {
   const [data, setData]               = useState([]);
   const [loading, setLoading]         = useState(true);
   const [error, setError]             = useState(null);
@@ -146,7 +146,7 @@ export function useSheetData() {
       setLastFetched(new Date());
 
     } catch (err) {
-      console.error('[useSheetData] fetch error:', err);
+      console.error('[useGivaudanSheetData] fetch error:', err);
       setError(err.message || 'Gagal memuat data dari Google Sheets');
     } finally {
       setLoading(false);
