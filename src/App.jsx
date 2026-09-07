@@ -3,6 +3,7 @@ import { SidebarProvider } from './contexts/SidebarContext';
 import DryingTimeDashboard from './pages/DryingTimeDashboard';
 import ProductionDeliveryDashboard from './pages/ProductionDeliveryDashboard';
 import BiscuitDashboard from './pages/BiscuitDashboard';
+import MaterialCheckDashboard from './pages/MaterialCheckDashboard';
 
 export default function App() {
   return (
@@ -20,6 +21,9 @@ export default function App() {
           <Route path="/production-delivery-dashboard/biscuit" element={<BiscuitDashboard />} />
           {/* Sub-pages lainnya — under construction, redirect ke landing */}
           <Route path="/production-delivery-dashboard/:segment" element={<ProductionDeliveryDashboard />} />
+
+          {/* Pengecekan Kecukupan Material */}
+          <Route path="/material-check" element={<MaterialCheckDashboard />} />
 
           {/* Catch-all: redirect unknown paths back to default */}
           <Route path="*" element={<Navigate to="/drying-time-dashboard" replace />} />

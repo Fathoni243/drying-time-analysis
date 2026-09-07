@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { X, ChevronUp, Droplets, Truck, Cog } from 'lucide-react';
+import { X, ChevronUp, Droplets, Truck, Cog, PackageCheck } from 'lucide-react';
 import { useSidebar } from '../../contexts/SidebarContext';
 
 // ── Sub-items: Production Delivery ───────────────────────────────────────────
@@ -24,6 +24,7 @@ export default function Sidebar() {
 
   const isDrying   = location.pathname === '/drying-time-dashboard';
   const isDelivery = location.pathname.startsWith('/production-delivery-dashboard');
+  const isMaterial = location.pathname === '/material-check';
 
   // Auto-expand delivery section when on its route
   useEffect(() => {
@@ -103,6 +104,22 @@ export default function Sidebar() {
           >
             <Droplets size={18} className="shrink-0" />
             <span>Drying Time Dashboard</span>
+          </Link>
+
+          {/* 1b. Pengecekan Material */}
+          <Link
+            to="/material-check"
+            aria-current={isMaterial ? 'page' : undefined}
+            className={`
+              flex items-center gap-3 px-3 py-2.5 rounded-lg
+              text-sm font-medium transition-colors duration-150
+              ${isMaterial
+                ? 'bg-slate-700/70 text-white'
+                : 'text-slate-400 hover:bg-slate-800/60 hover:text-slate-200'}
+            `}
+          >
+            <PackageCheck size={18} className="shrink-0" />
+            <span>Pengecekan Material</span>
           </Link>
 
           {/* 2. Production Delivery (expandable) */}
