@@ -90,23 +90,7 @@ export default function Sidebar() {
         {/* ── Navigation ── */}
         <nav className="flex-1 overflow-y-auto px-3 py-3 space-y-0.5">
 
-          {/* 1. Drying Time Dashboard */}
-          <Link
-            to="/drying-time-dashboard"
-            aria-current={isDrying ? 'page' : undefined}
-            className={`
-              flex items-center gap-3 px-3 py-2.5 rounded-lg
-              text-sm font-medium transition-colors duration-150
-              ${isDrying
-                ? 'bg-slate-700/70 text-white'
-                : 'text-slate-400 hover:bg-slate-800/60 hover:text-slate-200'}
-            `}
-          >
-            <Droplets size={18} className="shrink-0" />
-            <span>Drying Time Dashboard</span>
-          </Link>
-
-          {/* 1b. Pengecekan Material */}
+          {/* 1. Pengecekan Material */}
           <Link
             to="/material-check"
             aria-current={isMaterial ? 'page' : undefined}
@@ -122,7 +106,23 @@ export default function Sidebar() {
             <span>Pengecekan Material</span>
           </Link>
 
-          {/* 2. Production Delivery (expandable) */}
+          {/* 2. Drying Time Dashboard */}
+          <Link
+            to="/drying-time-dashboard"
+            aria-current={isDrying ? 'page' : undefined}
+            className={`
+              flex items-center gap-3 px-3 py-2.5 rounded-lg
+              text-sm font-medium transition-colors duration-150
+              ${isDrying
+                ? 'bg-slate-700/70 text-white'
+                : 'text-slate-400 hover:bg-slate-800/60 hover:text-slate-200'}
+            `}
+          >
+            <Droplets size={18} className="shrink-0" />
+            <span>Drying Time Dashboard</span>
+          </Link>
+
+          {/* 3. Production Delivery (expandable) */}
           <div>
             {/* Parent toggle row */}
             <button
