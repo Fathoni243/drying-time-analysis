@@ -11,7 +11,7 @@ export default function Header({ loading, lastFetched, onRefresh }) {
     <PageHeader
       icon={<PackageCheck className="w-5 h-5 text-amber-400" />}
       title="Pengecekan Kecukupan Material"
-      subtitle="Material Availability Check · PPIC Dashboard"
+      subtitle="Material Availability Check"
       accentColor="amber"
       lastFetched={lastFetched}
       loading={loading}

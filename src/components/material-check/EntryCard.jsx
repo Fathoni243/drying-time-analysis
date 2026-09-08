@@ -148,6 +148,7 @@ export default function EntryCard({ entry, index, onDelete }) {
               <thead>
                 <tr className="bg-slate-800/60 text-slate-400 text-xs uppercase tracking-wide">
                   <th className="px-4 py-3 text-left font-semibold">No</th>
+                  <th className="px-4 py-3 text-left font-semibold">Tipe</th>
                   <th className="px-4 py-3 text-left font-semibold">Nama Bahan</th>
                   <th className="px-4 py-3 text-left font-semibold">Kode Bahan</th>
                   <th className="px-4 py-3 text-right font-semibold">Qty Produksi</th>
@@ -170,6 +171,7 @@ export default function EntryCard({ entry, index, onDelete }) {
                     `}
                   >
                     <td className="px-4 py-2.5 text-slate-200">{i + 1}</td>
+                    <td className="px-4 py-2.5 text-slate-200">{ bahan.kodeBahan.slice(0,4) == "PACK" ? "PM" : "RM"  || '-'}</td>
                     <td className="px-4 py-2.5 text-slate-200">{bahan.namaBahan || '-'}</td>
                     <td className="px-4 py-2.5 text-slate-400 font-mono text-xs">{bahan.kodeBahan}</td>
                     <td className="px-4 py-2.5 text-right text-slate-200 tabular-nums">

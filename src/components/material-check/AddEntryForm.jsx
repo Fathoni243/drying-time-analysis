@@ -1,12 +1,17 @@
-import { useRef, useEffect } from 'react';
-import { Plus, Search, XCircle, Info } from 'lucide-react';
+import { useRef, useEffect, useState, useCallback } from 'react';
+import { Plus, Search, Info } from 'lucide-react';
+import AlertToast from '../shared/ui/AlertToast.jsx';
 
 /**
  * Form untuk menambahkan satu entry rencana produksi.
  *
+ * `onAdd` dipanggil saat user klik tombol Tambah.
+ * Ia harus mengembalikan:
+ *   - `{ ok: true, namaProduk: string }` → sukses
+ *   - `{ ok: false, message: string }`   → gagal validasi / tidak ditemukan
+ *
  * @param {{
  *   form: object,
- *   formError: string,
  *   searchQuery: string,
  *   showDropdown: boolean,
  *   filteredProductOptions: Array,
@@ -16,12 +21,11 @@ import { Plus, Search, XCircle, Info } from 'lucide-react';
  *   onSelectProduct: (product) => void,
  *   onSearchChange: (query: string) => void,
  *   onToggleDropdown: (show: boolean) => void,
- *   onAdd: () => void,
+ *   onAdd: () => { ok: boolean, namaProduk?: string, message?: string },
  * }} props
  */
 export default function AddEntryForm({
   form,
-  formError,
   searchQuery,
   showDropdown,
   filteredProductOptions,
@@ -35,6 +39,10 @@ export default function AddEntryForm({
 }) {
   const dropdownRef = useRef(null);
 
+  // ── Toast state ──────────────────────────────────────────────────────────
+  const [toast, setToast] = useState({ show: false, type: 'success', title: '', message: '' });
+  const dismissToast = useCallback(() => setToast(t => ({ ...t, show: false })), []);
+
   // Close dropdown on outside click
   useEffect(() => {
     const handler = (e) => {
@@ -45,6 +53,28 @@ export default function AddEntryForm({
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
   }, [onToggleDropdown]);
+
+  // ── Handler tombol Tambah ─────────────────────────────────────────────────
+  const handleAdd = () => {
+    const result = onAdd();
+    if (!result) return;
+
+    if (result.ok) {
+      setToast({
+        show: true,
+        type: 'success',
+        title: 'Entry berhasil ditambahkan',
+        message: `${result.namaProduk} telah ditambahkan ke daftar pengecekan.`,
+      });
+    } else {
+      setToast({
+        show: true,
+        type: 'warning',
+        title: 'Tidak dapat menambahkan entry',
+        message: result.message ?? 'Periksa kembali input Anda.',
+      });
+    }
+  };
 
   return (
     <div className="glass-card p-5">
@@ -156,28 +186,32 @@ export default function AddEntryForm({
         </div>
       </div>
 
-      {/* Error message */}
-      {formError && (
-        <p className="mt-3 text-xs text-red-400 flex items-center gap-1.5">
-          <XCircle className="w-3.5 h-3.5 shrink-0" />
-          {formError}
-        </p>
-      )}
+      {/* AlertToast — sukses / gagal */}
+      <div className="mt-3">
+        <AlertToast
+          show={toast.show}
+          type={toast.type}
+          title={toast.title}
+          message={toast.message}
+          autoDismissMs={toast.type === 'success' ? 3000 : 6000}
+          onDismiss={dismissToast}
+        />
+      </div>
 
       {/* Submit row */}
-      <div className="mt-4 flex items-center justify-between gap-3">
+      <div className="mt-3 flex items-center justify-between gap-3">
         <p className="text-[10px] text-slate-600 flex items-center gap-1">
           <Info className="w-3 h-3" />
           Data entri tersimpan otomatis di browser ini.
         </p>
         <button
           id="btn-tambah-produksi"
-          onClick={onAdd}
+          onClick={handleAdd}
           disabled={loading && !hasFetched}
           className="flex items-center gap-2 px-5 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-black font-semibold text-sm transition-all shadow-lg shadow-amber-500/20 hover:shadow-amber-500/30 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <Plus className="w-4 h-4" />
-          Tambah Produksi
+          Tambah
         </button>
       </div>
     </div>

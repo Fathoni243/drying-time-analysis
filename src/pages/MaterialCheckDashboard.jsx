@@ -55,7 +55,6 @@ export default function MaterialCheckDashboard() {
   const [form, setForm] = useState({
     kodeProduk: '', qtyPlanKg: '', jumlahBatch: '', tanggalProduksi: '', line: '',
   });
-  const [formError, setFormError] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [showDropdown, setShowDropdown] = useState(false);
 
@@ -78,14 +77,12 @@ export default function MaterialCheckDashboard() {
 
   const handleFormChange = useCallback((key, value) => {
     setForm(prev => ({ ...prev, [key]: value }));
-    if (formError) setFormError('');
-  }, [formError]);
+  }, []);
 
   const handleSearchChange = useCallback((query) => {
     setSearchQuery(query);
     if (!query) setForm(prev => ({ ...prev, kodeProduk: '' }));
-    if (formError) setFormError('');
-  }, [formError]);
+  }, []);
 
   const handleSelectProduct = useCallback((product) => {
     setForm(prev => ({ ...prev, kodeProduk: product.kodeProduk }));
@@ -95,23 +92,21 @@ export default function MaterialCheckDashboard() {
 
   const handleAddEntry = useCallback(() => {
     if (!form.kodeProduk) {
-      setFormError('Pilih Kode Produk terlebih dahulu.');
-      return;
+      return { ok: false, message: 'Pilih Kode Produk terlebih dahulu.' };
     }
     if (!productFormulaMap[form.kodeProduk]) {
-      setFormError(`Kode Produk "${form.kodeProduk}" tidak ditemukan di data.`);
-      return;
+      return { ok: false, message: `Kode Produk "${form.kodeProduk}" tidak ditemukan di data.` };
     }
     const qty = parseFloat(form.qtyPlanKg);
     if (!form.qtyPlanKg || isNaN(qty) || qty <= 0) {
-      setFormError('Qty Plan (kg) harus berupa angka positif.');
-      return;
+      return { ok: false, message: 'Qty Plan (kg) harus berupa angka positif.' };
     }
     const formula = productFormulaMap[form.kodeProduk];
+    const namaProduk = formula?.namaProduk ?? form.kodeProduk;
     const newEntry = {
       id: genId(),
       kodeProduk: form.kodeProduk,
-      namaProduk: formula?.namaProduk ?? form.kodeProduk,
+      namaProduk,
       qtyPlanKg: qty,
       jumlahBatch: form.jumlahBatch ? Number(form.jumlahBatch) : '',
       tanggalProduksi: form.tanggalProduksi,
@@ -120,7 +115,7 @@ export default function MaterialCheckDashboard() {
     setEntries(prev => [...prev, newEntry]);
     setForm({ kodeProduk: '', qtyPlanKg: '', jumlahBatch: '', tanggalProduksi: '', line: '' });
     setSearchQuery('');
-    setFormError('');
+    return { ok: true, namaProduk };
   }, [form, productFormulaMap]);
 
   const handleDelete = useCallback((id) => {
@@ -152,7 +147,6 @@ export default function MaterialCheckDashboard() {
         {/* Form Tambah Entry */}
         <AddEntryForm
           form={form}
-          formError={formError}
           searchQuery={searchQuery}
           showDropdown={showDropdown}
           filteredProductOptions={filteredProductOptions}

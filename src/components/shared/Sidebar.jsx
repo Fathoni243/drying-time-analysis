@@ -74,7 +74,7 @@ export default function Sidebar() {
               <Cog size={20} className="text-amber-400" />
             </div>
             <div>
-              <p className="text-sm font-bold gradient-text leading-tight">PPIC Dashboard</p>
+              <p className="text-sm font-bold gradient-text leading-tight">PPIC Team</p>
               <p className="text-[10px] text-slate-500 mt-0.5">Satoria Group</p>
             </div>
           </div>
@@ -103,7 +103,7 @@ export default function Sidebar() {
             `}
           >
             <PackageCheck size={18} className="shrink-0" />
-            <span>Pengecekan Material</span>
+            <span>Material Availability</span>
           </Link>
 
           {/* 2. Drying Time Dashboard */}
