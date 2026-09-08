@@ -26,6 +26,23 @@ function MetaChip({ label, value }) {
   );
 }
 
+// Warna badge per line
+const LINE_COLORS = {
+  'LINE 1': 'bg-blue-500/15 text-blue-300 border-blue-500/25',
+  'LINE 2': 'bg-teal-500/15 text-teal-300 border-teal-500/25',
+  'LINE 3': 'bg-amber-500/15 text-amber-300 border-amber-500/25',
+};
+
+function LineBadge({ line }) {
+  if (!line) return null;
+  const color = LINE_COLORS[line] ?? 'bg-slate-700/50 text-slate-400 border-slate-600/40';
+  return (
+    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold border shrink-0 ${color}`}>
+      {line}
+    </span>
+  );
+}
+
 // ── StatusBadge (bahan) ───────────────────────────────────────────────────────
 
 function StatusBadge({ status }) {
@@ -76,15 +93,15 @@ export default function EntryCard({ entry, index, onDelete }) {
 
         {/* Title & meta */}
         <div className="flex-1 min-w-0">
-          <div className="flex items-baseline gap-2 flex-wrap">
+          <div className="flex items-center gap-2 flex-wrap">
             <h3 className="text-base font-semibold text-white truncate">{entry.namaProduk || '-'}</h3>
             <span className="text-xs text-slate-500 shrink-0">{entry.kodeProduk}</span>
+            <LineBadge line={entry.line} />
           </div>
           <div className="flex items-center flex-wrap gap-x-3 gap-y-1 mt-1.5">
             <MetaChip label="Tanggal" value={formatDate(entry.tanggalProduksi)} />
             <MetaChip label="Qty Plan" value={`${formatIDNumber(entry.qtyPlanKg, 0)} kg`} />
             <MetaChip label="Batch"   value={entry.jumlahBatch || '-'} />
-            <MetaChip label="Line"    value={entry.line || '-'} />
           </div>
         </div>
 
@@ -130,6 +147,7 @@ export default function EntryCard({ entry, index, onDelete }) {
             <table className="w-full text-sm min-w-[700px]">
               <thead>
                 <tr className="bg-slate-800/60 text-slate-400 text-xs uppercase tracking-wide">
+                  <th className="px-4 py-3 text-left font-semibold">No</th>
                   <th className="px-4 py-3 text-left font-semibold">Nama Bahan</th>
                   <th className="px-4 py-3 text-left font-semibold">Kode Bahan</th>
                   <th className="px-4 py-3 text-right font-semibold">Qty Produksi</th>
@@ -151,6 +169,7 @@ export default function EntryCard({ entry, index, onDelete }) {
                         : 'hover:bg-white/[0.025]'}
                     `}
                   >
+                    <td className="px-4 py-2.5 text-slate-200">{i + 1}</td>
                     <td className="px-4 py-2.5 text-slate-200">{bahan.namaBahan || '-'}</td>
                     <td className="px-4 py-2.5 text-slate-400 font-mono text-xs">{bahan.kodeBahan}</td>
                     <td className="px-4 py-2.5 text-right text-slate-200 tabular-nums">

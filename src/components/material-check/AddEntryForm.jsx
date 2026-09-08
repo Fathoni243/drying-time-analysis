@@ -142,14 +142,17 @@ export default function AddEntryForm({
         {/* Line */}
         <div>
           <label htmlFor="field-line" className="block text-xs text-slate-500 mb-1.5 font-medium">Line</label>
-          <input
+          <select
             id="field-line"
-            type="text"
-            placeholder="mis. LINE 1"
             value={form.line}
             onChange={e => onFormChange('line', e.target.value)}
-            className="w-full px-3 py-2 rounded-lg bg-slate-800/60 border border-white/[0.08] text-slate-200 text-sm placeholder:text-slate-600 focus:outline-none focus:border-amber-500/40 focus:bg-slate-800 transition-all"
-          />
+            className="w-full px-3 py-2 rounded-lg bg-slate-800/60 border border-white/[0.08] text-slate-200 text-sm focus:outline-none focus:border-amber-500/40 focus:bg-slate-800 transition-all"
+          >
+            <option value="">— Pilih Line —</option>
+            <option value="LINE 1">LINE 1</option>
+            <option value="LINE 2">LINE 2</option>
+            <option value="LINE 3">LINE 3</option>
+          </select>
         </div>
       </div>
 

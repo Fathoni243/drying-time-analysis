@@ -42,6 +42,39 @@ export function normalizeCode(val) {
   return s;
 }
 
+/**
+ * Cari index kolom berdasarkan nama header (case-insensitive).
+ * Prioritas: exact match dulu, lalu substring match.
+ * @param {string[]} headers  - Header row yang sudah di-lowercase & trim
+ * @param {string[]} keywords - Daftar keyword yang dicari (urutan = prioritas)
+ * @returns {number}          - Index kolom, atau -1 jika tidak ditemukan
+ */
+function findCol(headers, keywords) {
+  // Pass 1: exact match
+  for (const kw of keywords) {
+    const target = kw.toLowerCase().trim();
+    const idx = headers.findIndex(h => h === target);
+    if (idx !== -1) return idx;
+  }
+  // Pass 2: substring includes
+  for (const kw of keywords) {
+    const target = kw.toLowerCase().trim();
+    const idx = headers.findIndex(h => h.includes(target));
+    if (idx !== -1) return idx;
+  }
+  return -1;
+}
+
+/**
+ * Ambil nilai cell sebagai string trimmed. Aman jika idx = -1 atau row pendek.
+ * @param {string[]} row
+ * @param {number}   idx
+ * @returns {string}
+ */
+function cell(row, idx) {
+  return idx !== -1 ? (row[idx]?.toString().trim() ?? '') : '';
+}
+
 // ── Google Sheets fetcher ────────────────────────────────────────────────────
 
 /**
@@ -66,82 +99,103 @@ async function fetchSheet(sheetName, range) {
 
 /**
  * Build StockMap dari sheet wh-stock.
- * Kolom: A=No, B=Code, C=Material Name, D=Group, E=UoM, F-H=Batch/Qty/Exp(WH),
- *        I-K=Batch/Qty/Exp(Prod), L=Total
+ * Header yang dicari: "code" (kode bahan) dan "total" (total stok).
  *
  * Aturan: satu material bisa multi-baris (batch). Total hanya di baris pertama
- * yang punya Code (kolom B) terisi. Baris kosong diabaikan.
+ * yang punya Code terisi. Baris lanjutan (Code kosong) diabaikan.
  *
  * @param {string[][]} rows
  * @returns {Record<string, number>} kodeBahan → totalStok
  */
 function buildStockMap(rows) {
+  if (rows.length < 2) return {};
+
+  // headers ada di baris 2 (index 1)
+  const headers = rows[1].map(h => h?.toString().trim().toLowerCase() ?? '');
+  const idx = {
+    code:  findCol(headers, ['code']),
+    total: findCol(headers, ['total']),
+  };
+
   const map = {};
-  // Skip header row (index 0)
   for (let i = 1; i < rows.length; i++) {
     const row = rows[i];
-    const code = normalizeCode(row[1]); // kolom B (index 1)
+    const code = normalizeCode(cell(row, idx.code));
     if (!code) continue; // baris lanjutan atau kosong
-    const total = parseIDNumber(row[11]); // kolom L (index 11)
-    map[code] = total;
+    map[code] = parseIDNumber(cell(row, idx.total));
   }
   return map;
 }
 
 /**
  * Build IncomingMap dari sheet incoming.
- * Kolom: A=RM# (Kode Bahan), B=Material Description, C=Shipped Qty (KG)
- * Satu kode bisa muncul lebih dari sekali → jumlahkan.
+ * Header yang dicari: "rm#" / "code" (kode bahan) dan "shipped qty" (qty kedatangan).
+ * Satu kode bisa muncul lebih dari sekali → dijumlahkan.
  *
  * @param {string[][]} rows
  * @returns {Record<string, number>} kodeBahan → totalQtyKedatangan
  */
 function buildIncomingMap(rows) {
+  if (rows.length < 2) return {};
+
+  const headers = rows[0].map(h => h?.toString().trim().toLowerCase() ?? '');
+  const idx = {
+    code: findCol(headers, ['rm#', 'rm #', 'kode bahan', 'code']),
+    qty:  findCol(headers, ['shipped qty', 'qty', 'quantity']),
+  };
+
   const map = {};
-  // Skip header row (index 0)
   for (let i = 1; i < rows.length; i++) {
     const row = rows[i];
-    const code = normalizeCode(row[0]); // kolom A (index 0)
+    const code = normalizeCode(cell(row, idx.code));
     if (!code) continue;
-    const qty = parseIDNumber(row[2]); // kolom C (index 2)
-    map[code] = (map[code] ?? 0) + qty;
+    map[code] = (map[code] ?? 0) + parseIDNumber(cell(row, idx.qty));
   }
   return map;
 }
 
 /**
  * Build ProductFormulaMap dari sheet prebatch-material.
- * Kolom: A=Kode Produk, B=Nama Produk, C=QTY Produk (ignored),
- *        D=Kode Bahan, E=Nama Bahan, F=Qty Bahan (per kg), G=Satuan
+ * Header yang dicari: kode produk, nama produk, kode bahan, nama bahan,
+ *                     qty bahan (per kg), satuan.
+ *
  * Satu Kode Produk punya banyak baris (satu baris = satu bahan).
+ * Kolom Kode Produk bisa kosong pada baris lanjutan (carry-forward).
  *
  * @param {string[][]} rows
  * @returns {Record<string, {kodeProduk: string, namaProduk: string, bahan: Array}>}
  */
 function buildProductFormulaMap(rows) {
+  if (rows.length < 2) return {};
+
+  const headers = rows[0].map(h => h?.toString().trim().toLowerCase() ?? '');
+  const idx = {
+    kodeProduk: findCol(headers, ['kode produk', 'product code', 'kode']),
+    namaProduk: findCol(headers, ['nama produk', 'product name', 'nama']),
+    kodeBahan:  findCol(headers, ['kode bahan', 'material code', 'rm#', 'rm #']),
+    namaBahan:  findCol(headers, ['nama bahan', 'material name', 'material description']),
+    qtyPerKg:   findCol(headers, ['qty bahan', 'qty per kg', 'qty']),
+    uom:        findCol(headers, ['satuan', 'uom', 'unit']),
+  };
+
   const map = {};
   let lastKodeProduk = '';
   let lastNamaProduk = '';
 
-  // Skip header row (index 0)
   for (let i = 1; i < rows.length; i++) {
     const row = rows[i];
 
-    // Kode Produk di kolom A (index 0) — bisa kosong untuk baris lanjutan
-    const rawKode = row[0]?.toString().trim() ?? '';
+    // Kode Produk bisa kosong pada baris lanjutan (carry-forward ke baris berikutnya)
+    const rawKode = cell(row, idx.kodeProduk);
     if (rawKode) {
       lastKodeProduk = rawKode.toUpperCase();
-      lastNamaProduk = row[1]?.toString().trim() ?? '';
+      lastNamaProduk = cell(row, idx.namaProduk);
     }
 
     if (!lastKodeProduk) continue;
 
-    const kodeBahan = normalizeCode(row[3]); // kolom D
+    const kodeBahan = normalizeCode(cell(row, idx.kodeBahan));
     if (!kodeBahan) continue;
-
-    const namaBahan   = row[4]?.toString().trim() ?? '';
-    const qtyPerKg    = parseIDNumber(row[5]); // kolom F
-    const uom         = row[6]?.toString().trim() ?? '';
 
     if (!map[lastKodeProduk]) {
       map[lastKodeProduk] = {
@@ -151,7 +205,12 @@ function buildProductFormulaMap(rows) {
       };
     }
 
-    map[lastKodeProduk].bahan.push({ kodeBahan, namaBahan, qtyPerKg, uom });
+    map[lastKodeProduk].bahan.push({
+      kodeBahan,
+      namaBahan: cell(row, idx.namaBahan),
+      qtyPerKg:  parseIDNumber(cell(row, idx.qtyPerKg)),
+      uom:       cell(row, idx.uom),
+    });
   }
 
   return map;
@@ -186,9 +245,9 @@ export function useMaterialCheckData() {
     setError(null);
     try {
       const [stockRows, incomingRows, materialRows] = await Promise.all([
-        fetchSheet(STOCK_SHEET,    'A:L'),
-        fetchSheet(INCOMING_SHEET, 'A:C'),
-        fetchSheet(MATERIAL_SHEET, 'A:G'),
+        fetchSheet(STOCK_SHEET,    'A:Z'),
+        fetchSheet(INCOMING_SHEET, 'A:Z'),
+        fetchSheet(MATERIAL_SHEET, 'A:Z'),
       ]);
 
       setStockMap(buildStockMap(stockRows));
