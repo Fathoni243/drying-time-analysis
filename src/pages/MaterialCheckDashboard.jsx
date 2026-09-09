@@ -6,9 +6,11 @@ import AddEntryForm from '../components/material-check/AddEntryForm';
 import EntryCard from '../components/material-check/EntryCard';
 import { SummaryBar } from '../components/material-check/SummaryBar';
 import { LoadingState, ErrorState, EmptyState } from '../components/material-check/StateViews';
+import AlertToast from '../components/shared/ui/AlertToast.jsx';
 
 import { useMaterialCheckData } from '../hooks/useMaterialCheckData';
 import { computeAll } from '../utils/materialCheckUtils';
+import { exportMaterialCheckToExcel } from '../utils/excel/exportMaterialCheck.js';
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
@@ -55,8 +57,10 @@ export default function MaterialCheckDashboard() {
   const [form, setForm] = useState({
     kodeProduk: '', qtyPlanKg: '', jumlahBatch: '', tanggalProduksi: '', line: '',
   });
-  const [searchQuery, setSearchQuery] = useState('');
-  const [showDropdown, setShowDropdown] = useState(false);
+  const [searchQuery, setSearchQuery]     = useState('');
+  const [showDropdown, setShowDropdown]   = useState(false);
+  const [exportLoading, setExportLoading] = useState(false);
+  const [exportToast, setExportToast]     = useState({ show: false, type: 'success', title: '', message: '' });
 
   // Daftar produk untuk dropdown, sorted
   const productOptions = useMemo(() =>
@@ -128,6 +132,34 @@ export default function MaterialCheckDashboard() {
     localStorage.removeItem(STORAGE_KEY);
   }, []);
 
+  const handleExport = useCallback(async () => {
+    if (!computedEntries.length) {
+      setExportToast({
+        show: true, type: 'warning',
+        title: 'Tidak ada data',
+        message: 'Tambahkan setidaknya satu produk sebelum melakukan export.',
+      });
+      return;
+    }
+    setExportLoading(true);
+    try {
+      await exportMaterialCheckToExcel(computedEntries);
+      setExportToast({
+        show: true, type: 'success',
+        title: 'Export berhasil',
+        message: `File Excel telah didownload (${computedEntries.length} produk).`,
+      });
+    } catch (err) {
+      setExportToast({
+        show: true, type: 'error',
+        title: 'Export gagal',
+        message: err.message ?? 'Terjadi kesalahan saat membuat file Excel.',
+      });
+    } finally {
+      setExportLoading(false);
+    }
+  }, [computedEntries]);
+
   // Auto-fetch saat mount
   useEffect(() => {
     refetch();
@@ -167,8 +199,23 @@ export default function MaterialCheckDashboard() {
         {hasFetched && !error && (
           <>
             {computedEntries.length > 0 && (
-              <SummaryBar entries={computedEntries} onClearAll={handleClearAll} />
+              <SummaryBar
+                entries={computedEntries}
+                onClearAll={handleClearAll}
+                onExport={handleExport}
+                exportLoading={exportLoading}
+              />
             )}
+
+            {/* Toast hasil export */}
+            <AlertToast
+              show={exportToast.show}
+              type={exportToast.type}
+              title={exportToast.title}
+              message={exportToast.message}
+              autoDismissMs={exportToast.type === 'success' ? 4000 : 8000}
+              onDismiss={() => setExportToast(t => ({ ...t, show: false }))}
+            />
 
             {computedEntries.length === 0 ? (
               <EmptyState />

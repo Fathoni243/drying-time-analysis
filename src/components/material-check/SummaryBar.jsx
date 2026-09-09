@@ -1,4 +1,4 @@
-import { PackageCheck, CheckCircle2, AlertTriangle, RotateCcw } from 'lucide-react';
+import { PackageCheck, CheckCircle2, AlertTriangle, RotateCcw, FileDown, Loader2 } from 'lucide-react';
 import { summarizeAll } from '../../utils/materialCheckUtils';
 
 // ── GlobalSummary ─────────────────────────────────────────────────────────────
@@ -35,21 +35,40 @@ export function GlobalSummary({ entries }) {
 // ── SummaryBar ─────────────────────────────────────────────────────────────────
 
 /**
- * Bar yang menggabungkan GlobalSummary + tombol Kosongkan Daftar.
- * @param {{ entries: Array, onClearAll: () => void }} props
+ * Bar yang menggabungkan GlobalSummary + tombol Export + tombol Kosongkan Daftar.
+ * @param {{ entries: Array, onClearAll: () => void, onExport: () => void, exportLoading: boolean }} props
  */
-export function SummaryBar({ entries, onClearAll }) {
+export function SummaryBar({ entries, onClearAll, onExport, exportLoading }) {
   return (
     <div className="flex items-center justify-between gap-3 flex-wrap">
       <GlobalSummary entries={entries} />
-      <button
-        id="btn-kosongkan-daftar"
-        onClick={onClearAll}
-        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-red-500/20 text-red-400/70 hover:text-red-400 hover:border-red-500/40 hover:bg-red-500/5 text-xs transition-all"
-      >
-        <RotateCcw className="w-3.5 h-3.5" />
-        Kosongkan Daftar
-      </button>
+
+      <div className="flex items-center gap-2">
+        {/* Export ke Excel */}
+        <button
+          id="btn-export-excel"
+          onClick={onExport}
+          disabled={exportLoading || !entries.length}
+          title="Export ke Excel"
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-emerald-500/25 text-emerald-400/80 hover:text-emerald-400 hover:border-emerald-500/50 hover:bg-emerald-500/5 text-xs font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {exportLoading
+            ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
+            : <FileDown className="w-3.5 h-3.5" />
+          }
+          {exportLoading ? 'Generating…' : 'Export Excel'}
+        </button>
+
+        {/* Kosongkan daftar */}
+        <button
+          id="btn-kosongkan-daftar"
+          onClick={onClearAll}
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-red-500/20 text-red-400/70 hover:text-red-400 hover:border-red-500/40 hover:bg-red-500/5 text-xs transition-all"
+        >
+          <RotateCcw className="w-3.5 h-3.5" />
+          Kosongkan Daftar
+        </button>
+      </div>
     </div>
   );
 }

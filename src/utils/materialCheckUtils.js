@@ -73,9 +73,13 @@ export function computeAll(entries, stockMap, incomingMap, productFormulaMap) {
         sudahPernahMuncul: true,
       };
 
+      // Tipe bahan: PM jika kode mengandung "PACK", selain itu RM
+      const tipe = kodeBahan.includes('PACK') ? 'PM' : 'RM';
+
       return {
         kodeBahan,
         namaBahan,
+        tipe,
         qtyBahanProduksi,
         qtyKedatangan,
         stokAwal,
