@@ -34,7 +34,7 @@ export default function Login() {
       <div className="w-full max-w-sm bg-white rounded-2xl shadow-xl p-8 border border-slate-200">
         <div className="mb-8 text-center">
           <h1 className="text-2xl font-bold bg-gradient-to-br from-amber-500 to-orange-500 bg-clip-text text-transparent mb-2">
-            PPIC Website
+            PPIC Dashboard
           </h1>
           <p className="text-sm text-slate-500 font-medium">
             Silakan login untuk melanjutkan
