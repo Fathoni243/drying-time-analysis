@@ -29,13 +29,13 @@ export default function App() {
             <ProtectedRoute>
               <SidebarProvider>
                 <Routes>
-                  <Route path="/" element={<Navigate to="/material-check" replace />} />
-                  <Route path="/material-check" element={<MaterialCheckDashboard />} />
+                  <Route path="/" element={<Navigate to="/drying-time-dashboard" replace />} />
+                  {/* <Route path="/material-check" element={<MaterialCheckDashboard />} /> */}
                   <Route path="/drying-time-dashboard" element={<DryingTimeDashboard />} />
                   <Route path="/production-delivery-dashboard" element={<ProductionDeliveryDashboard />} />
                   <Route path="/production-delivery-dashboard/biscuit" element={<BiscuitDashboard />} />
                   <Route path="/production-delivery-dashboard/:segment" element={<ProductionDeliveryDashboard />} />
-                  <Route path="*" element={<Navigate to="/material-check" replace />} />
+                  <Route path="*" element={<Navigate to="/drying-time-dashboard" replace />} />
                 </Routes>
               </SidebarProvider>
             </ProtectedRoute>
