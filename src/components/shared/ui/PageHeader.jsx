@@ -31,6 +31,9 @@ export default function PageHeader({
   const { logout } = useAuth();
 
   const handleLogout = async () => {
+    const isConfirmed = window.confirm("Apakah Anda yakin ingin keluar dari aplikasi?");
+    if (!isConfirmed) return;
+
     try {
       await logout();
     } catch (err) {
@@ -110,11 +113,11 @@ export default function PageHeader({
           </div>
         </button>
 
-        {/* Right: last fetched + extras + refresh */}
+        {/* Right:  extras (if exist) + logout */}
         <div className="flex items-center gap-2 shrink-0">
           {extra}
 
-          {lastFetched && (
+          {/* {lastFetched && (
             <div className="hidden sm:flex flex-col items-end text-right">
               <span className="text-[11px] text-slate-500 leading-tight">
                 Data per:{' '}
@@ -127,7 +130,7 @@ export default function PageHeader({
                 </span>
               </span>
             </div>
-          )}
+          )} */}
 
           <button
             onClick={handleLogout}

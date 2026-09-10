@@ -1,12 +1,18 @@
 import { useState } from "react";
 import { useAuth } from "../contexts/AuthContext";
+import { useNavigate, useLocation } from "react-router-dom";
 
 export default function Login() {
   const { login } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
+
+  // URL asal yang mau diakses sebelum di-redirect ke /login; default ke dashboard utama
+  const from = location?.state?.from?.pathname || "/material-check";
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -14,6 +20,7 @@ export default function Login() {
     setSubmitting(true);
     try {
       await login(email, password);
+      navigate(from, { replace: true }); // arahkan ke halaman asal
     } catch (err) {
       console.error(err);
       setError("Email atau password salah. Silakan coba lagi.");
