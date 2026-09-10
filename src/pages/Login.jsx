@@ -12,7 +12,7 @@ export default function Login() {
   const [submitting, setSubmitting] = useState(false);
 
   // URL asal yang mau diakses sebelum di-redirect ke /login; default ke dashboard utama
-  const from = location?.state?.from?.pathname || "/material-check";
+  const from = location?.state?.from?.pathname || "/drying-time-dashboard";
 
   const handleSubmit = async (e) => {
     e.preventDefault();

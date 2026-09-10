@@ -16,7 +16,7 @@ export default function PublicRoute({ children }) {
   }
 
   if (user) {
-    return <Navigate to="/material-check" replace />;
+    return <Navigate to="/drying-time-dashboard" replace />;
   }
 
   return children;
