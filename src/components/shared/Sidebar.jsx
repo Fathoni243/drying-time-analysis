@@ -91,7 +91,7 @@ export default function Sidebar() {
         <nav className="flex-1 overflow-y-auto px-3 py-3 space-y-0.5">
 
           {/* 1. Pengecekan Material */}
-          {/* <Link
+          <Link
             to="/material-check"
             aria-current={isMaterial ? 'page' : undefined}
             className={`
@@ -104,7 +104,7 @@ export default function Sidebar() {
           >
             <PackageCheck size={18} className="shrink-0" />
             <span>Material Availability</span>
-          </Link> */}
+          </Link>
 
           {/* 2. Drying Time Dashboard */}
           <Link
