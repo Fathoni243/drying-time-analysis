@@ -4,9 +4,9 @@ import { useState, useCallback } from 'react';
 
 const API_KEY         = import.meta.env.VITE_GOOGLE_API_KEY;
 const SPREADSHEET_ID  = import.meta.env.VITE_MATERIAL_SPREADSHEET_ID;
-const STOCK_SHEET     = import.meta.env.VITE_STOCK_SHEET_NAME     || 'wh-stock';
-const INCOMING_SHEET  = import.meta.env.VITE_INCOMING_SHEET_NAME  || 'incoming';
-const MATERIAL_SHEET  = import.meta.env.VITE_MATERIAL_SHEET_NAME  || 'prebatch-material';
+const STOCK_SHEET     = import.meta.env.VITE_STOCK_SHEET_NAME     || 'Sheet1';
+const INCOMING_SHEET  = import.meta.env.VITE_INCOMING_SHEET_NAME  || 'Sheet2';
+const MATERIAL_SHEET  = import.meta.env.VITE_MATERIAL_SHEET_NAME  || 'Sheet3';
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
