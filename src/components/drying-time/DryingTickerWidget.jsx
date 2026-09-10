@@ -1,12 +1,12 @@
 import { useMemo, useState } from 'react';
 import { LineChart, Line, ResponsiveContainer } from 'recharts';
-import { minutesToTime } from '../utils/timeUtils';
+import { minutesToTime } from '../../utils/timeUtils';
 import {
   TrendingUp, TrendingDown, Minus,
   Search, X, ArrowUpDown, ThumbsUp, ThumbsDown,
   Filter, MousePointerClick, Weight,
 } from 'lucide-react';
-import AlertToast from './ui/AlertToast';
+import AlertToast from '../shared/ui/AlertToast';
 
 // ── Trend calculation ────────────────────────────────────────────────────────
 
